@@ -1,34 +1,7 @@
 
 #include "vox/world/Chunk.h"
 
-#include "vox/chunk/ChunkDataFlat.h"
-#include "vox/chunk/ChunkDataUniform.h"
-#include "vox/chunk/ChunkDataRLE.h"
-#include "vox/chunk/Size.h"
-#include "vox/events/Chunk.h"
-
-#include "hen/core/Core.h"
-#include "hen/event/EventBus.h"
-#include "hen/util/MathLib.h"
-
-namespace
-{
-	inline int getNormalIndex(const glm::ivec3& pos)
-	{
-		return (pos.x * vox::chunk::SIZE + pos.y) * vox::chunk::SIZE + pos.z;
-	}
-}
-
-
-vox::world::Chunk::Chunk(World* world, const glm::ivec3& cpos)
-	: m_world(world), m_cpos(cpos)
-{
-	hen::Core::getEventBus().post(events::ChunkCreate{ world, cpos });
-}
-vox::world::Chunk::~Chunk()
-{
-	hen::Core::getEventBus().post(events::ChunkDestroy{ getWorld(), getChunkPos() });
-}
+#include "vox/world/ChunkSize.h"
 
 void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 {
@@ -41,218 +14,68 @@ void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 		neighbor->m_neighbors[side.opposite.id] = this;
 }
 
-void vox::world::Chunk::setBlockUnsafe(unsigned int id, const glm::ivec3& pos)
+vox::data::BlockQuery vox::world::Chunk::getBlock(const glm::ivec3& pos) const
 {
-	const auto index = getNormalIndex(pos);
-	const auto oldId = m_blockDataExpanded[index].m_id;
-	if (oldId == 0 && id != 0)
-		m_blockCount++;
-	else if (oldId != 0 && id == 0)
-		m_blockCount--;
-
-	m_blockDataExpanded[index].m_id = id;
+	return m_data.requestBlock(pos);
 }
-void vox::world::Chunk::setBlock(unsigned int id, const glm::ivec3& pos)
+vox::data::BlockQueryList vox::world::Chunk::getBlocks(const std::vector<glm::ivec3>& locations) const
 {
-	if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.x >= chunk::SIZE || pos.y >= chunk::SIZE || pos.z >= chunk::SIZE)
-		return;
-	if (preBlockChange(id, pos, pos))
-		return;
-
-	setBlockUnsafe(id, pos);
-
-	postBlockChange(id, pos, pos);
+	return m_data.requestBlocks(locations);
 }
-void vox::world::Chunk::setBlocks(unsigned int id, const std::vector<glm::ivec3>& pos)
+vox::data::BlockQueryRectangle vox::world::Chunk::getBlocks(const glm::ivec3& start, const glm::ivec3& end) const
 {
-	glm::ivec3 min{ chunk::SIZE_MINUS_ONE }, max{};
-	for (const auto& p : pos)
-	{
-		if (p.x < 0 || p.y < 0 || p.z < 0 || p.x >= chunk::SIZE || p.y >= chunk::SIZE || p.z >= chunk::SIZE)
-			continue;
-		min = hen::math::min(min, p);
-		max = hen::math::max(max, p);
-	}
-	if (preBlockChange(id, min, max))
-		return;
-
-	for (const auto& p : pos)
-	{
-		if (p.x < 0 || p.y < 0 || p.z < 0 || p.x >= chunk::SIZE || p.y >= chunk::SIZE || p.z >= chunk::SIZE)
-			continue;
-		setBlockUnsafe(id, p);
-	}
-
-	postBlockChange(id, min, max);
-}
-void vox::world::Chunk::setBlockCylinder(unsigned int id, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
-{
-	const auto& min = hen::math::max(glm::ivec3{}, start);
-	const auto& max = hen::math::min(glm::ivec3{ chunk::SIZE_MINUS_ONE }, end);
-	if (preBlockChange(id, min, max))
-		return;
-
-	const glm::vec3 size{ hen::math::abs(end - start) + 1 };
-	const glm::vec3 center{ -0.5f + glm::vec3{ start } +0.5f * size };
-	const auto dim = axis == hen::math::Axis::Z ? glm::uvec2{ 0, 1 } : axis == hen::math::Axis::Y ? glm::uvec2{ 0, 2 } : glm::uvec2{ 1, 2 };
-
-	glm::ivec3 pos;
-	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
-	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
-	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
-	{
-		// TODO: This is only an approximation; make this better
-		const auto& delta = hen::math::pow(2.0f * (glm::vec3{ pos } -center) / size, 2);
-		if (delta[dim.x] + delta[dim.y] <= 1.0f)
-			setBlockUnsafe(id, pos);
-	}
-
-	postBlockChange(id, min, max);
-}
-void vox::world::Chunk::setBlockEllipse(unsigned int id, const glm::ivec3& start, const glm::ivec3& end)
-{
-	const auto& min = hen::math::max(glm::ivec3{}, start);
-	const auto& max = hen::math::min(glm::ivec3{ chunk::SIZE_MINUS_ONE }, end);
-	if (preBlockChange(id, min, max))
-		return;
-
-	const glm::vec3 size{ hen::math::abs(end - start) + 1 };
-	const glm::vec3 center{ -0.5f + glm::vec3{ start } +0.5f * size };
-
-	glm::ivec3 pos;
-	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
-	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
-	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
-	{
-		// TODO: This is only an approximation; make this better
-		const auto& delta = hen::math::pow(2.0f * (glm::vec3{ pos } -center) / size, 2);
-		if (delta.x + delta.y + delta.z <= 1.0f)
-			setBlockUnsafe(id, pos);
-	}
-
-	postBlockChange(id, min, max);
-}
-void vox::world::Chunk::setBlockRectangle(unsigned int id, const glm::ivec3& start, const glm::ivec3& end)
-{
-	const auto& min = hen::math::max(glm::ivec3{}, start);
-	const auto& max = hen::math::min(glm::ivec3{ chunk::SIZE_MINUS_ONE }, end);
-	if (preBlockChange(id, min, max))
-		return;
-
-	glm::ivec3 pos;
-	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
-	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
-	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
-		setBlockUnsafe(id, pos);
-
-	postBlockChange(id, min, max);
+	return m_data.requestBlocks(start, end);
 }
 
-unsigned int vox::world::Chunk::getBlockUnsafe(const glm::ivec3& pos) const
+void vox::world::Chunk::setBlock(const data::BlockQuery& query)
 {
-	return m_blockData->getBlock(pos).m_id;
+	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
+	m_data.assignChange(query);
+	m_data.optimizeDataFormat();
 }
-unsigned int vox::world::Chunk::getBlock(const glm::ivec3& pos) const
+void vox::world::Chunk::setBlocks(const data::BlockQueryList& query)
 {
-	if (pos.x < 0 || pos.y < 0 || pos.z < 0 || pos.x >= chunk::SIZE || pos.y >= chunk::SIZE || pos.z >= chunk::SIZE)
-		return 0;
-	return m_blockData == nullptr ? 0 : getBlockUnsafe(pos);
+	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
+	m_data.assignChange(query);
+	m_data.optimizeDataFormat();
 }
-std::unique_ptr<vox::chunk::BlockVolume> vox::world::Chunk::getBlockVolume() const
+void vox::world::Chunk::setBlocks(const data::BlockQueryRectangle& query)
 {
-	auto data = std::make_unique<chunk::BlockVolume>(chunk::SIZE + 2, glm::ivec3{ -1 });
-	m_blockData->fill(*data);
+	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
+	m_data.assignChange(query);
+	m_data.optimizeDataFormat();
+}
 
-	glm::ivec3 pos;
-	if (const auto& neighbor = getNeighbor(Side::NORTH))
-	{
-		pos.x = 0;
-		for (pos.y = 0; pos.y < chunk::SIZE; ++pos.y)
-		for (pos.z = 0; pos.z < chunk::SIZE; ++pos.z)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ chunk::SIZE, 0, 0 }
-		);
-	}
-	if (const auto& neighbor = getNeighbor(Side::SOUTH))
-	{
-		pos.x = chunk::SIZE_MINUS_ONE;
-		for (pos.y = 0; pos.y < chunk::SIZE; ++pos.y)
-		for (pos.z = 0; pos.z < chunk::SIZE; ++pos.z)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ -chunk::SIZE, 0, 0 }
-		);
-	}
-	if (const auto& neighbor = getNeighbor(Side::WEST))
-	{
-		pos.y = 0;
-		for (pos.x = 0; pos.x < chunk::SIZE; ++pos.x)
-		for (pos.z = 0; pos.z < chunk::SIZE; ++pos.z)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ 0, chunk::SIZE, 0 }
-		);
-	}
-	if (const auto& neighbor = getNeighbor(Side::EAST))
-	{
-		pos.y = chunk::SIZE_MINUS_ONE;
-		for (pos.x = 0; pos.x < chunk::SIZE; ++pos.x)
-		for (pos.z = 0; pos.z < chunk::SIZE; ++pos.z)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ 0, -chunk::SIZE, 0 }
-		);
-	}
-	if (const auto& neighbor = getNeighbor(Side::TOP))
-	{
-		pos.z = 0;
-		for (pos.x = 0; pos.x < chunk::SIZE; ++pos.x)
-		for (pos.y = 0; pos.y < chunk::SIZE; ++pos.y)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ 0, 0, chunk::SIZE }
-		);
-	}
-	if (const auto& neighbor = getNeighbor(Side::BOTTOM))
-	{
-		pos.z = chunk::SIZE_MINUS_ONE;
-		for (pos.x = 0; pos.x < chunk::SIZE; ++pos.x)
-		for (pos.y = 0; pos.y < chunk::SIZE; ++pos.y)
-			data->setBlock(neighbor->getBlockUnsafe(pos), pos + glm::ivec3{ 0, 0, -chunk::SIZE }
-		);
-	}
+vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
+{
+	const glm::ivec3 min{ 0 };
+	const glm::ivec3 max{ chunk::SIZE };
+
+	data::BlockRegion data{ glm::ivec3{ -1 }, glm::ivec3{ chunk::SIZE + 2 } };
+
+	m_data.reguestBlocks(data, min, max, glm::ivec3{});
+	if (const auto neightbor = getNeighbor(Side::NORTH))
+		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ min.x + 1, max.y, max.z }, glm::ivec3{ chunk::SIZE, 0, 0 });
+	if (const auto neightbor = getNeighbor(Side::SOUTH))
+		neightbor->m_data.reguestBlocks(data, glm::ivec3{ max.x - 1, min.y, min.z }, max, glm::ivec3{ -chunk::SIZE, 0, 0 });
+	if (const auto neightbor = getNeighbor(Side::WEST))
+		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ max.x, min.y + 1, max.z }, glm::ivec3{ 0, chunk::SIZE, 0 });
+	if (const auto neightbor = getNeighbor(Side::EAST))
+		neightbor->m_data.reguestBlocks(data, glm::ivec3{ min.x, max.y - 1, min.z }, max, glm::ivec3{ 0, -chunk::SIZE, 0 });
+	if (const auto neightbor = getNeighbor(Side::TOP))
+		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ max.x, max.y, min.z + 1 }, glm::ivec3{ 0, 0, chunk::SIZE });
+	if (const auto neightbor = getNeighbor(Side::BOTTOM))
+		neightbor->m_data.reguestBlocks(data, glm::ivec3{ min.x, min.y, max.z - 1 }, max, glm::ivec3{ 0, 0, -chunk::SIZE });
+
 	return data;
 }
-
-bool vox::world::Chunk::preBlockChange(unsigned int id, const glm::ivec3& min, const glm::ivec3& max)
+vox::data::ChunkDataRLE vox::world::Chunk::getCompressedData() const
 {
-	if (min.x > max.x || min.y > max.y || min.z > max.z)
-		return true;
-	if (isEmpty() && id == 0)
-		return true;
-
-	if (m_blockData == nullptr)
-		initializeBlockData();
-	m_blockDataExpanded = m_blockData->expand();
-	return false;
-}
-void vox::world::Chunk::postBlockChange(unsigned int id, const glm::ivec3& min, const glm::ivec3& max)
-{
-	hen::Core::getEventBus().post(events::ChunkBlockChange{ this, min, max });
-
-	optimizeBlockData();
+	return data::ChunkDataRLE{};
 }
 
-void vox::world::Chunk::initializeBlockData()
+bool vox::world::Chunk::isEmpty() const
 {
-	m_blockData = std::make_unique<chunk::ChunkDataFlat>();
-	m_blockCount = 0;
+	return m_data.getDataFormat() == data::ChunkCompositeData::DataFormat::NONE;
 }
-void vox::world::Chunk::releaseBlockData()
-{
-	m_blockData = nullptr;
-	m_blockCount = 0;
-}
-void vox::world::Chunk::optimizeBlockData()
-{
-	if (m_blockCount == 0)
-		releaseBlockData();
 
-	const auto& first = std::begin(m_blockDataExpanded);
-	if (std::equal(first + 1, std::end(m_blockDataExpanded), first))
-		m_blockData = std::make_unique<chunk::ChunkDataUniform>(*first);
-	else
-		m_blockData = std::make_unique<chunk::ChunkDataRLE>(m_blockDataExpanded);
-	m_blockDataExpanded.swap(std::vector<chunk::BlockData>{});
-}

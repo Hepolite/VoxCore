@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vox/chunk/BlockVolume.h"
+#include "vox/world/data/BlockRegion.h"
 #include "vox/world/Side.h"
 
 #include "hen/io/File.h"
@@ -26,7 +26,7 @@ namespace vox
 				void onLoad(const hen::io::File& file, const BlockRegistry& registry, hen::texture::Texture2DArray& texture);
 
 				inline unsigned int getHandle() const { return m_handle; }
-				inline unsigned int getTexture(const chunk::BlockVolume& volume, const glm::ivec3& pos, const Side& side) const
+				inline unsigned int getTexture(const data::BlockRegion& volume, const glm::ivec3& pos, const Side& side) const
 					{ return m_lookup(volume, pos, side); }
 
 			private:
@@ -34,8 +34,8 @@ namespace vox
 				void loadConnected(const pugi::xml_node& node, const BlockRegistry& registry);
 				void loadRandom(const pugi::xml_node& node);
 
-				std::function<unsigned int(const chunk::BlockVolume&, const glm::ivec3&, const Side&)> m_lookup =
-					[](const chunk::BlockVolume&, const glm::ivec3&, const Side&) { return 0; };
+				std::function<unsigned int(const data::BlockRegion&, const glm::ivec3&, const Side&)> m_lookup =
+					[](const data::BlockRegion&, const glm::ivec3&, const Side&) { return 0; };
 
 				unsigned int m_handle = 0;
 			};

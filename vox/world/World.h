@@ -3,14 +3,13 @@
 
 #include "vox/world/Chunk.h"
 
-#include "hen/io/File.h"
 #include "hen/util/MathEnum.h"
 
-#include <glm/vec3.hpp>
 #include <glm/gtx/hash.hpp>
+#include <glm/vec3.hpp>
 
-#include <string>
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 namespace vox
@@ -20,26 +19,15 @@ namespace vox
 		class World
 		{
 		public:
+			using ChunkMap = std::unordered_map<glm::ivec3, Chunk>;
+
+			World() = delete;
 			World(const std::string& name) : m_name(name) {}
-			World(const World&) = delete;
-			World(World&&) = delete;
-			~World() = default;
-
-			World& operator=(const World&) = delete;
-			World& operator=(World&&) = delete;
-
-			///////////////////////////////////////////////////////
-
-			void onProcess(float dt);
-			void onLoad(const hen::io::File& file);
-			void onUnload();
 
 			inline const std::string& getName() const { return m_name; }
 
-			///////////////////////////////////////////////////////
-
-			Chunk* getChunk(const glm::ivec3& cpos) const;
-			std::vector<Chunk*> getChunks() const;
+			const Chunk* getChunk(const glm::ivec3& cpos) const;
+			inline const ChunkMap& getChunks() const { return m_chunks; }
 
 			unsigned int getBlock(const glm::ivec3& pos) const;
 			void setBlock(unsigned int id, const glm::ivec3& pos);
@@ -49,13 +37,13 @@ namespace vox
 			void setBlockRectangle(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
 
 		private:
-			Chunk* createChunk(const glm::ivec3& cpos);
-			Chunk* getOrCreateChunk(const glm::ivec3& cpos);
+			Chunk* getChunk(const glm::ivec3& cpos);
+			Chunk& getOrCreateChunk(const glm::ivec3& cpos);
 			void deleteChunk(const glm::ivec3& cpos);
 
 			const std::string m_name;
 
-			std::unordered_map<glm::ivec3, std::unique_ptr<Chunk>> m_chunks;
+			ChunkMap m_chunks;
 		};
 	}
 }

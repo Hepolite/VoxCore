@@ -28,9 +28,9 @@ bool vox::world::BlockRegistry::insert(const std::string& name, unsigned int id)
 		LOG_WARNING << "Attempted to register air at id " << id << "!";
 		return false;
 	}
-	if (getName(id) != "air")
+	if (getName(id) != "air" && !getName(id).empty())
 	{
-		LOG_WARNING << "The block at index " << id << " has already been registered!";
+		LOG_WARNING << "The block at index " << id << " (" << getName(id) << ") has already been registered!";
 		return false;
 	}
 	if (has(name))

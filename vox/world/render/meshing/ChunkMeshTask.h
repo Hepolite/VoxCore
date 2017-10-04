@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vox/chunk/BlockVolume.h"
+#include "vox/world/data/BlockRegion.h"
 #include "vox/world/Location.h"
 #include "vox/world/render/ChunkModelVertex.h"
 
@@ -18,7 +18,7 @@ namespace vox
 			{
 			public:
 				ChunkMeshTask() = default;
-				ChunkMeshTask(const Location& location, std::unique_ptr<chunk::BlockVolume>&& data) : m_location(location), m_data(std::move(data)) {}
+				ChunkMeshTask(const Location& location, data::BlockRegion&& data) : m_location(location), m_data(std::make_unique<data::BlockRegion>(std::move(data))) {}
 				ChunkMeshTask(const ChunkMeshTask&) = delete;
 				ChunkMeshTask(ChunkMeshTask&&) = default;
 				~ChunkMeshTask() = default;
@@ -27,13 +27,13 @@ namespace vox
 				ChunkMeshTask& operator=(ChunkMeshTask&& other) = default;
 
 				inline Location getLocation() const { return m_location; }
-				inline const chunk::BlockVolume& getData() const { return *m_data; }
+				inline const data::BlockRegion& getData() const { return *m_data; }
 				inline std::vector<unsigned int>& getIndices() { return m_indices; }
 				inline std::vector<ChunkModelVertex>& getVertices() { return m_vertices; }
 
 			private:
 				Location m_location;
-				std::unique_ptr<chunk::BlockVolume> m_data;
+				std::unique_ptr<data::BlockRegion> m_data;
 				std::vector<unsigned int> m_indices;
 				std::vector<ChunkModelVertex> m_vertices;
 			};

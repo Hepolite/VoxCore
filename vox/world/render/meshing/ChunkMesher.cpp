@@ -1,10 +1,9 @@
 
 #include "vox/world/render/meshing/ChunkMesher.h"
 
-#include "vox/chunk/Size.h"
 #include "vox/VoxCore.h"
+#include "vox/world/ChunkSize.h"
 #include "vox/world/render/BlockRenderer.h"
-#include "vox/world/render/ChunkRenderer.h"
 #include "vox/world/render/RenderLayer.h"
 #include "vox/world/render/UniverseRenderer.h"
 #include "vox/world/Side.h"
@@ -82,9 +81,12 @@ bool vox::world::render::ChunkMesher::pollResult(ChunkMeshTask& task)
 }
 
 
-std::unique_ptr<vox::world::render::ChunkRenderer> vox::world::render::ChunkMesher::mesh(const Chunk& chunk)
+std::unique_ptr<vox::world::render::ChunkRenderer> vox::world::render::ChunkMesher::push(const World* world, const glm::ivec3& cpos)
 {
-	pushTask(ChunkMeshTask{ Location{ chunk.getWorld(), chunk.getChunkPos() }, chunk.getBlockVolume() });
+	auto chunk = world->getChunk(cpos);
+	if (chunk == nullptr)
+		return nullptr;
+	pushTask(ChunkMeshTask{ Location{ world, cpos }, chunk->getMeshingData() });
 
 	auto renderer = std::make_unique<ChunkRenderer>();
 	renderer->m_mesh.addAttribute(hen::opengl::Attribute{ 0, hen::opengl::Format::FLOAT, 3, 0 });
@@ -107,7 +109,7 @@ void vox::world::render::ChunkMesher::meshNaive(ChunkMeshTask& task) const
 	for (pos.y = 0; pos.y < chunk::SIZE; ++pos.y)
 	for (pos.z = 0; pos.z < chunk::SIZE; ++pos.z)
 	{
-		const auto& id = data.getBlock(pos).m_id;
+		const auto& id = data.getBlock(pos).getId();
 		const auto& block = blocks[id];
 		const RenderLayer layer = block.getRenderLayer();
 		if (layer == RenderLayer::INVISIBLE)
@@ -116,7 +118,7 @@ void vox::world::render::ChunkMesher::meshNaive(ChunkMeshTask& task) const
 
 		for (const auto& side : Side::SIDES)
 		{
-			const auto& tmpBlock = blocks[data.getBlock(pos + side.z).m_id];
+			const auto& tmpBlock = blocks[data.getBlock(pos + side.z).getId()];
 			if (tmpBlock.isOccluding(side.opposite))
 				continue;
 
@@ -165,9 +167,9 @@ void vox::world::render::ChunkMesher::meshGreedy(ChunkMeshTask& task) const
 			{
 				const auto& side = sides[dim.x];
 				const auto& sideOther = side.opposite;
-				const unsigned long long current = data.getBlock(pos).m_id;
-				const unsigned long long above = data.getBlock(pos + sides[dim.x].z).m_id;
-				const unsigned long long below = data.getBlock(pos - sides[dim.x].z).m_id;
+				const unsigned long long current = data.getBlock(pos).getId();
+				const unsigned long long above = data.getBlock(pos + sides[dim.x].z).getId();
+				const unsigned long long below = data.getBlock(pos - sides[dim.x].z).getId();
 
 				if (current != above && !blocks[above].isOccluding(sideOther))
 					mask[0][pos[dim.y]][pos[dim.z]] = current << 32 | blocks[current].getTexture(side).getTexture(data, pos, side);

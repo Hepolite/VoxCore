@@ -1,8 +1,9 @@
 
 #include "vox/world/render/UniverseRenderer.h"
 
-#include "vox/chunk/Size.h"
 #include "vox/events/Chunk.h"
+#include "vox/world/ChunkSize.h"
+#include "vox/world/World.h"
 
 #include "hen/asset/AssetManager.h"
 #include "hen/core/Core.h"
@@ -21,20 +22,21 @@ vox::world::render::UniverseRenderer::UniverseRenderer()
 	});
 	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkBlockChange>([this](events::ChunkBlockChange& event)
 	{
-		auto chunk = event.getChunk();
-		addMeshTask(chunk);
+		const auto world = event.getWorld();
+		const auto cpos = event.getChunkPos();
+		addMeshTask(event.getWorld(), event.getChunkPos());
 		if (event.getStart().x == 0)
-			addMeshTask(chunk->getNeighbor(Side::SOUTH));
+			addMeshTask(world, cpos + glm::ivec3{ -1, 0, 0 });
 		if (event.getEnd().x == chunk::SIZE_MINUS_ONE)
-			addMeshTask(chunk->getNeighbor(Side::NORTH));
+			addMeshTask(world, cpos + glm::ivec3 { 1, 0, 0 });
 		if (event.getStart().y == 0)
-			addMeshTask(chunk->getNeighbor(Side::EAST));
+			addMeshTask(world, cpos + glm::ivec3 { 0, -1, 0 });
 		if (event.getEnd().y == chunk::SIZE_MINUS_ONE)
-			addMeshTask(chunk->getNeighbor(Side::WEST));
+			addMeshTask(world, cpos + glm::ivec3 { 0, 1, 0 });
 		if (event.getStart().z == 0)
-			addMeshTask(chunk->getNeighbor(Side::BOTTOM));
+			addMeshTask(world, cpos + glm::ivec3 { 0, 0, -1 });
 		if (event.getEnd().z == chunk::SIZE_MINUS_ONE)
-			addMeshTask(chunk->getNeighbor(Side::TOP));
+			addMeshTask(world, cpos + glm::ivec3 { 0, 0, 1 });
 	});
 }
 vox::world::render::UniverseRenderer::~UniverseRenderer()
@@ -88,25 +90,24 @@ void vox::world::render::UniverseRenderer::loadShaders()
 	m_shader = assets.get<hen::shader::ShaderProgram>("world/chunk_opaque");
 }
 
-void vox::world::render::UniverseRenderer::addMeshTask(const Chunk* chunk)
+void vox::world::render::UniverseRenderer::addMeshTask(const World* world, const glm::ivec3& cpos)
 {
-	if (chunk != nullptr)
-		m_meshTasks.emplace(chunk->getWorld(), chunk->getChunkPos());
+	m_meshTasks.emplace(world, cpos);
 }
 void vox::world::render::UniverseRenderer::handleMeshTasks()
 {
 	while (!m_meshTasks.empty() && m_mesher.size() < 50)
 	{
 		const auto& it = m_meshTasks.begin();
-		const auto& task = *it;
+		const auto world = it->getWorld();
+		const auto pos = it->getPos();
 
-		const auto& chunk = task.getWorld()->getChunk(task.getPos());
-		const auto& renderer = m_renderers.find(task.getWorld());
-		if (chunk != nullptr && renderer != m_renderers.end())
+		const auto& renderer = m_renderers.find(world);
+		if (world->getChunk(pos) != nullptr && renderer != m_renderers.end())
 		{
-			auto& ptr = m_mesher.mesh(*chunk);
+			auto& ptr = m_mesher.push(world, pos);
 			if (ptr != nullptr)
-				renderer->second.prepare(chunk->getChunkPos(), std::move(ptr));
+				renderer->second.prepare(pos, std::move(ptr));
 		}
 
 		m_meshTasks.erase(it);
@@ -140,7 +141,7 @@ void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world
 		if (it.second)
 		{
 			for (const auto& chunk : world->getChunks())
-				addMeshTask(chunk);
+				addMeshTask(world, chunk.first);
 		}
 	}
 	else

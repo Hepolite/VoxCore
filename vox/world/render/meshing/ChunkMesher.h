@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vox/chunk/BlockVolume.h"
+#include "vox/world/Chunk.h"
 #include "vox/world/Location.h"
 #include "vox/world/render/ChunkRenderer.h"
 #include "vox/world/render/meshing/ChunkMeshTask.h"
@@ -30,7 +30,7 @@ namespace vox
 				ChunkMesher& operator=(ChunkMesher&&) = delete;
 
 				unsigned int size();
-				std::unique_ptr<ChunkRenderer> mesh(const Chunk& chunk);
+				std::unique_ptr<ChunkRenderer> push(const World* world, const glm::ivec3& cpos);
 				inline bool poll(ChunkMeshTask& result) { return pollResult(result); }
 
 			private:

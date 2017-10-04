@@ -3,6 +3,8 @@
 
 #include "vox/world/World.h"
 
+#include <glm/geometric.hpp>
+
 vox::world::RayTrace::RayTrace(const World* world, const glm::ivec3& start, const glm::ivec3& end)
 	: RayTrace(world, glm::vec3{ start } + 0.5f, glm::vec3{ end - start }, glm::length(glm::vec3{ end - start }))
 {}

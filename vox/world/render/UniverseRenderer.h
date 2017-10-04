@@ -45,7 +45,7 @@ namespace vox
 				void loadRenderers(const BlockRegistry& registry);
 				void loadShaders();
 
-				void addMeshTask(const Chunk* chunk);
+				void addMeshTask(const World* world, const glm::ivec3& cpos);
 				void handleMeshTasks();
 				void finalizeMeshTasks();
 

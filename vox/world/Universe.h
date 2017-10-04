@@ -4,6 +4,7 @@
 #include "vox/world/BlockRegistry.h"
 #include "vox/world/World.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 

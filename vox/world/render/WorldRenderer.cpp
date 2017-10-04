@@ -1,7 +1,7 @@
 
 #include "vox/world/render/WorldRenderer.h"
 
-#include "vox/chunk/Size.h"
+#include "vox/world/ChunkSize.h"
 
 #include "hen/core/Core.h"
 #include "hen/render/uniform/UniformBlockManager.h"
