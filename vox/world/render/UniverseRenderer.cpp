@@ -16,27 +16,43 @@ vox::world::render::UniverseRenderer::UniverseRenderer()
 	auto& eventBus = hen::Core::getEventBus();
 	m_chunkDestroyListener = eventBus.registerCallback<events::ChunkDestroy>([this](events::ChunkDestroy& event)
 	{
-		const auto& renderer = m_renderers.find(event.getWorld());
-		if (renderer != m_renderers.end())
-			renderer->second.remove(event.getChunkPos());
+		const auto world = event.getWorld();
+		const auto cpos = event.getChunkPos();
+		const auto& result = m_renderers.find(world);
+		if (result == m_renderers.end())
+			return;
+		auto& renderer = result->second;
+
+		renderer.scheduleMeshTask(world, cpos);
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { -1, 0, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 1, 0, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, -1, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 1, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, -1 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, 1 });
 	});
 	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkBlockChange>([this](events::ChunkBlockChange& event)
 	{
 		const auto world = event.getWorld();
 		const auto cpos = event.getChunkPos();
-		addMeshTask(event.getWorld(), event.getChunkPos());
+		const auto& result = m_renderers.find(world);
+		if (result == m_renderers.end())
+			return;
+		auto& renderer = result->second;
+
+		renderer.scheduleMeshTask(world, cpos);
 		if (event.getStart().x == 0)
-			addMeshTask(world, cpos + glm::ivec3{ -1, 0, 0 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3{ -1, 0, 0 });
 		if (event.getEnd().x == chunk::SIZE_MINUS_ONE)
-			addMeshTask(world, cpos + glm::ivec3 { 1, 0, 0 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 1, 0, 0 });
 		if (event.getStart().y == 0)
-			addMeshTask(world, cpos + glm::ivec3 { 0, -1, 0 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, -1, 0 });
 		if (event.getEnd().y == chunk::SIZE_MINUS_ONE)
-			addMeshTask(world, cpos + glm::ivec3 { 0, 1, 0 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 1, 0 });
 		if (event.getStart().z == 0)
-			addMeshTask(world, cpos + glm::ivec3 { 0, 0, -1 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, -1 });
 		if (event.getEnd().z == chunk::SIZE_MINUS_ONE)
-			addMeshTask(world, cpos + glm::ivec3 { 0, 0, 1 });
+			renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, 1 });
 	});
 }
 vox::world::render::UniverseRenderer::~UniverseRenderer()
@@ -46,10 +62,10 @@ vox::world::render::UniverseRenderer::~UniverseRenderer()
 	eventBus.unregisterListener(m_chunkBlockChangeListener);
 }
 
-void vox::world::render::UniverseRenderer::onProcess(float dt)
+void vox::world::render::UniverseRenderer::onProcess()
 {
-	handleMeshTasks();
-	finalizeMeshTasks();
+	for (auto& renderer : m_renderers)
+		renderer.second.onProcess();
 }
 void vox::world::render::UniverseRenderer::onRender(float dt) const
 {
@@ -90,49 +106,6 @@ void vox::world::render::UniverseRenderer::loadShaders()
 	m_shader = assets.get<hen::shader::ShaderProgram>("world/chunk_opaque");
 }
 
-void vox::world::render::UniverseRenderer::addMeshTask(const World* world, const glm::ivec3& cpos)
-{
-	m_meshTasks.emplace(world, cpos);
-}
-void vox::world::render::UniverseRenderer::handleMeshTasks()
-{
-	while (!m_meshTasks.empty() && m_mesher.size() < 50)
-	{
-		const auto& it = m_meshTasks.begin();
-		const auto world = it->getWorld();
-		const auto pos = it->getPos();
-
-		const auto& renderer = m_renderers.find(world);
-		if (world->getChunk(pos) != nullptr && renderer != m_renderers.end())
-		{
-			auto& ptr = m_mesher.push(world, pos);
-			if (ptr != nullptr)
-				renderer->second.prepare(pos, std::move(ptr));
-		}
-
-		m_meshTasks.erase(it);
-	}
-}
-void vox::world::render::UniverseRenderer::finalizeMeshTasks()
-{
-	ChunkMeshTask task;
-	while (m_mesher.poll(task))
-	{
-		const auto& it = m_renderers.find(task.getLocation().getWorld());
-		if (it == m_renderers.end())
-			continue;
-		auto renderer = it->second.grab(task.getLocation().getPos());
-		if (renderer == nullptr)
-			continue;
-		std::swap(task.getIndices(), renderer->m_mesh.getIndiceData());
-		std::swap(task.getVertices(), renderer->m_mesh.getVertexData());
-		if (renderer->m_mesh.build())
-			it->second.replace(task.getLocation().getPos());
-		else
-			it->second.remove(task.getLocation().getPos());
-	}
-}
-
 void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world, bool visible)
 {
 	if (visible)
@@ -140,8 +113,9 @@ void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world
 		const auto& it = m_renderers.emplace(std::piecewise_construct, std::make_tuple(world), std::make_tuple());
 		if (it.second)
 		{
+			auto& renderer = it.first->second;
 			for (const auto& chunk : world->getChunks())
-				addMeshTask(world, chunk.first);
+				renderer.scheduleMeshTask(world, chunk.first);
 		}
 	}
 	else

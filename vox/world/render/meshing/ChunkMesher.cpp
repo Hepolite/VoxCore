@@ -50,8 +50,8 @@ unsigned int vox::world::render::ChunkMesher::size()
 void vox::world::render::ChunkMesher::pushTask(ChunkMeshTask&& task)
 {
 	std::lock_guard<std::mutex> guard{ m_mutex };
-	m_tasks.erase(task.getLocation());
-	m_tasks.emplace(task.getLocation(), std::move(task));
+	m_tasks.erase(task.getPos());
+	m_tasks.emplace(task.getPos(), std::move(task));
 }
 bool vox::world::render::ChunkMesher::pollTask(ChunkMeshTask& task)
 {
@@ -66,8 +66,8 @@ bool vox::world::render::ChunkMesher::pollTask(ChunkMeshTask& task)
 void vox::world::render::ChunkMesher::pushResult(ChunkMeshTask&& task)
 {
 	std::lock_guard<std::mutex> guard{ m_mutex };
-	m_products.erase(task.getLocation());
-	m_products.emplace(task.getLocation(), std::move(task));
+	m_products.erase(task.getPos());
+	m_products.emplace(task.getPos(), std::move(task));
 }
 bool vox::world::render::ChunkMesher::pollResult(ChunkMeshTask& task)
 {
@@ -81,12 +81,9 @@ bool vox::world::render::ChunkMesher::pollResult(ChunkMeshTask& task)
 }
 
 
-std::unique_ptr<vox::world::render::ChunkRenderer> vox::world::render::ChunkMesher::push(const World* world, const glm::ivec3& cpos)
+std::unique_ptr<vox::world::render::ChunkRenderer> vox::world::render::ChunkMesher::startTask(ChunkMeshTask&& task)
 {
-	auto chunk = world->getChunk(cpos);
-	if (chunk == nullptr)
-		return nullptr;
-	pushTask(ChunkMeshTask{ Location{ world, cpos }, chunk->getMeshingData() });
+	pushTask(std::move(task));
 
 	auto renderer = std::make_unique<ChunkRenderer>();
 	renderer->m_mesh.addAttribute(hen::opengl::Attribute{ 0, hen::opengl::Format::FLOAT, 3, 0 });

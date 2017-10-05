@@ -13,7 +13,7 @@ namespace vox
 		class BlockRegion
 		{
 		public:
-			BlockRegion() = delete;
+			BlockRegion() = default;
 			BlockRegion(const glm::ivec3& offset, const glm::ivec3& size);
 			BlockRegion(const glm::ivec3& offset, const glm::ivec3& size, const BlockData& data);
 			BlockRegion(const BlockRegion&) = delete;

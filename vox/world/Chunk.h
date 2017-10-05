@@ -23,6 +23,7 @@ namespace vox
 			void acceptQuery(data::BlockWriteQuery& query);
 
 			data::BlockRegion getMeshingData() const;
+			data::ChunkDataRLE getStoringData() const;
 
 			bool isEmpty() const;
 

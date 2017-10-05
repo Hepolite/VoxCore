@@ -29,7 +29,7 @@ vox::editor::EditorWorld::~EditorWorld()
 void vox::editor::EditorWorld::onProcess(float dt)
 {
 	VoxCore::getUniverse().onProcess(dt);
-	VoxCore::getUniverseRenderer().onProcess(dt);
+	VoxCore::getUniverseRenderer().onProcess();
 	Editor::onProcess(dt);
 
 	const auto& keyboard = hen::Core::getKeyboard();

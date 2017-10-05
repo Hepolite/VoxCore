@@ -8,6 +8,25 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+void vox::world::render::WorldRenderer::onProcess()
+{
+	ChunkMeshTask result;
+	while (m_mesher.pollResult(result))
+	{
+		const auto& pos = result.getPos();
+		const auto& search = m_replacers.find(pos);
+		if (search == m_replacers.end())
+			continue;
+
+		auto& replacer = search->second;
+		std::swap(replacer->m_mesh.getIndiceData(), result.getIndices());
+		std::swap(replacer->m_mesh.getVertexData(), result.getVertices());
+		replacer->m_mesh.build();
+
+		std::swap(m_renderers[pos], replacer);
+		m_replacers.erase(pos);
+	}
+}
 void vox::world::render::WorldRenderer::onRender(float dt) const
 {
 	const auto& uboModel = hen::Core::getUniformBlockManager().get("Model");
@@ -18,24 +37,12 @@ void vox::world::render::WorldRenderer::onRender(float dt) const
 	}
 }
 
-vox::world::render::ChunkRenderer* vox::world::render::WorldRenderer::grab(const glm::ivec3& pos) const
+void vox::world::render::WorldRenderer::scheduleMeshTask(const World* world, const glm::ivec3& pos)
 {
-	const auto& it = m_replacers.find(pos);
-	return it == m_replacers.end() ? nullptr : it->second.get();
+	if (const auto chunk = world->getChunk(pos))
+		m_replacers[pos] = m_mesher.startTask(ChunkMeshTask{ pos, chunk->getMeshingData() });
 }
-void vox::world::render::WorldRenderer::prepare(const glm::ivec3 & pos, std::unique_ptr<ChunkRenderer>&& renderer)
-{
-	m_replacers[pos] = std::move(renderer);
-}
-void vox::world::render::WorldRenderer::replace(const glm::ivec3& pos)
-{
-	const auto& it = m_replacers.find(pos);
-	if (it == m_replacers.end())
-		return;
-	m_renderers[pos] = std::move(it->second);
-	m_replacers.erase(pos);
-}
-void vox::world::render::WorldRenderer::remove(const glm::ivec3& pos)
+void vox::world::render::WorldRenderer::scheduleMeshRemoval(const glm::ivec3& pos)
 {
 	m_renderers.erase(pos);
 	m_replacers.erase(pos);

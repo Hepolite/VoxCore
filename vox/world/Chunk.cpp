@@ -66,6 +66,13 @@ vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 
 	return region;
 }
+vox::data::ChunkDataRLE vox::world::Chunk::getStoringData() const
+{
+	if (m_data != &m_dataFlat)
+		return m_dataRLE;
+	data::ChunkDataTranslator translator;
+	return translator.toRLE(m_dataFlat);
+}
 
 bool vox::world::Chunk::isEmpty() const
 {

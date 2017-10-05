@@ -2,7 +2,6 @@
 #pragma once
 
 #include "vox/world/Chunk.h"
-#include "vox/world/Location.h"
 #include "vox/world/render/ChunkRenderer.h"
 #include "vox/world/render/meshing/ChunkMeshTask.h"
 
@@ -11,6 +10,9 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+
+#include <glm/gtx/hash.hpp>
+#include <glm/vec3.hpp>
 
 namespace vox
 {
@@ -30,8 +32,8 @@ namespace vox
 				ChunkMesher& operator=(ChunkMesher&&) = delete;
 
 				unsigned int size();
-				std::unique_ptr<ChunkRenderer> push(const World* world, const glm::ivec3& cpos);
-				inline bool poll(ChunkMeshTask& result) { return pollResult(result); }
+				std::unique_ptr<ChunkRenderer> startTask(ChunkMeshTask&& task);
+				bool pollResult(ChunkMeshTask& task);
 
 			private:
 				void meshNaive(ChunkMeshTask& task) const;
@@ -43,10 +45,9 @@ namespace vox
 				void pushTask(ChunkMeshTask&& task);
 				bool pollTask(ChunkMeshTask& task);
 				void pushResult(ChunkMeshTask&& task);
-				bool pollResult(ChunkMeshTask& task);
 
-				std::unordered_map<Location, ChunkMeshTask> m_tasks;
-				std::unordered_map<Location, ChunkMeshTask> m_products;
+				std::unordered_map<glm::ivec3, ChunkMeshTask> m_tasks;
+				std::unordered_map<glm::ivec3, ChunkMeshTask> m_products;
 
 				bool m_running = true;
 				std::thread m_thread;
