@@ -62,9 +62,6 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeCylinder(const Bloc
 		}
 
 		chunkQuery.add(std::move(blockQuery), cpos);
-
-		if (chunkQuery.size() >= MAX_CHUNKS_PER_QUERY)
-			return chunkQuery;
 	}
 
 	return chunkQuery;
@@ -104,9 +101,6 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeEllipse(const Block
 		}
 
 		chunkQuery.add(std::move(blockQuery), cpos);
-
-		if (chunkQuery.size() >= MAX_CHUNKS_PER_QUERY)
-			return chunkQuery;
 	}
 
 	return chunkQuery;
@@ -155,9 +149,6 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeRectangle(const Blo
 		BlockWriteQuery blockQuery{ true, false, false };
 		blockQuery.add(data, lowest, highest);
 		chunkQuery.add(std::move(blockQuery), cpos);
-
-		if (chunkQuery.size() >= MAX_CHUNKS_PER_QUERY)
-			return chunkQuery;
 	}
 
 	return chunkQuery;

@@ -13,8 +13,6 @@ namespace vox
 	{
 		namespace BlockQueryHelper
 		{
-			const unsigned int MAX_CHUNKS_PER_QUERY = 2500; // Equates to 625mb data at default chunk size
-
 			ChunkReadQuery readBlock(const glm::ivec3& pos);
 
 			ChunkWriteQuery writeBlock(const BlockData& data, const glm::ivec3& pos);

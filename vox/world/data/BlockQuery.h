@@ -28,6 +28,7 @@ namespace vox
 			BlockBaseQuery& operator=(const BlockBaseQuery&) = delete;
 			BlockBaseQuery& operator=(BlockBaseQuery&&) = default;
 
+			inline unsigned int memusage() const { return size() * sizeof(BlockQuery); }
 			inline unsigned int size() const { return m_nodes.size(); }
 			inline bool empty() const { return m_nodes.empty(); }
 
