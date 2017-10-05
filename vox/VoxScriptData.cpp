@@ -3,6 +3,7 @@
 
 #include "vox/VoxCore.h"
 #include "vox/world/BlockRegistry.h"
+#include "vox/world/data/BlockQueryHelper.h"
 #include "vox/world/Universe.h"
 #include "vox/world/World.h"
 
@@ -12,6 +13,35 @@ vox::script::VoxScriptData::VoxScriptData()
 {
 	hen::script::ScriptHelper::addScriptData([](hen::script::ScriptHelper& helper)
 	{
+		////////////
+		// Blocks //
+		////////////
+		helper.addType<data::BlockData>("BlockData");
+		helper.addConstructor<data::BlockData(unsigned int)>("BlockData");
+		helper.addConstructor<data::BlockData(unsigned int, glm::ivec4)>("BlockData");
+		helper.addFunction(&data::BlockData::getData, "getData");
+		helper.addFunction(&data::BlockData::getId, "getId");
+		helper.addFunction(&data::BlockData::getLight, "getLight");
+		helper.addFunction(&data::BlockData::setData, "setData");
+		helper.addFunction(&data::BlockData::setId, "setId");
+		helper.addFunction(&data::BlockData::setLight, "setLight");
+
+		// Block queries
+		helper.addType<data::ChunkReadQuery>("ChunkReadQuery");
+		helper.addConstructor<data::ChunkReadQuery()>("ChunkReadQuery");
+		helper.addFunction<data::ChunkReadQuery&, data::ChunkReadQuery, data::ChunkReadQuery&&>(&data::ChunkReadQuery::operator=, "=");
+		helper.addType<data::ChunkWriteQuery>("ChunkWriteQuery");
+		helper.addConstructor<data::ChunkWriteQuery()>("ChunkWriteQuery");
+		helper.addFunction<data::ChunkWriteQuery&, data::ChunkWriteQuery, data::ChunkWriteQuery&&>(&data::ChunkWriteQuery::operator=, "=");
+
+		helper.addFunction(data::BlockQueryHelper::readBlock, "queryReadBlock");
+		helper.addFunction(data::BlockQueryHelper::writeBlock, "queryWriteBlock");
+		helper.addFunction(data::BlockQueryHelper::writeCylinder, "queryWriteCylinder");
+		helper.addFunction(data::BlockQueryHelper::writeEllipse, "queryWriteEllipse");
+		helper.addFunction(data::BlockQueryHelper::writeLine, "queryWriteLine");
+		helper.addFunction(data::BlockQueryHelper::writeRectangle, "queryWriteRectangle");
+		helper.addFunction(data::BlockQueryHelper::writeSphere, "queryWriteSphere");
+
 		//////////////
 		// Universe //
 		//////////////
@@ -21,11 +51,8 @@ vox::script::VoxScriptData::VoxScriptData()
 
 		// World
 		helper.addFunction(&world::World::getBlock, "getBlock");
-		helper.addFunction(&world::World::setBlock, "setBlock");
-		helper.addFunction(&world::World::setBlockCylinder, "setBlockCylinder");
-		helper.addFunction(&world::World::setBlockLine, "setBlockLine");
-		helper.addFunction(&world::World::setBlockEllipse, "setBlockEllipse");
-		helper.addFunction(&world::World::setBlockRectangle, "setBlockRectangle");
+		helper.addFunction<void, world::World, data::ChunkReadQuery&>(&world::World::acceptQuery, "acceptQuery");
+		helper.addFunction<void, world::World, data::ChunkWriteQuery&>(&world::World::acceptQuery, "acceptQuery");
 
 		// Block registry
 		helper.addFunction(&world::BlockRegistry::getId, "getId");

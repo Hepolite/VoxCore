@@ -4,12 +4,9 @@
 #include "vox/world/Chunk.h"
 #include "vox/world/data/ChunkQuery.h"
 
-#include "hen/util/MathEnum.h"
-
 #include <glm/gtx/hash.hpp>
 #include <glm/vec3.hpp>
 
-#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -29,12 +26,6 @@ namespace vox
 
 			const Chunk* getChunk(const glm::ivec3& cpos) const;
 			inline const ChunkMap& getChunks() const { return m_chunks; }
-
-			void setBlock(unsigned int id, const glm::ivec3& pos);
-			void setBlockCylinder(unsigned int id, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis);
-			void setBlockEllipse(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
-			void setBlockLine(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
-			void setBlockRectangle(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
 
 			data::BlockData getBlock(const glm::ivec3& pos) const;
 			void acceptQuery(data::ChunkReadQuery& query) const;

@@ -34,10 +34,14 @@ namespace vox
 			inline auto begin() { return m_nodes.begin(); }
 			inline auto end() { return m_nodes.end(); }
 
-			inline void add(T&& query, const glm::ivec3& cpos)
+			inline bool add(T&& query, const glm::ivec3& cpos)
 			{
-				if (!query.empty() && m_memusage + query.memusage() <= MAX_BYTES_PER_QUERY)
+				if (m_memusage + query.memusage() > MAX_BYTES_PER_QUERY)
+					return false;
+				m_memusage += query.memusage();
+				if (!query.empty())
 					m_nodes.emplace_back(std::move(query), cpos);
+				return true;
 			}
 
 		private:

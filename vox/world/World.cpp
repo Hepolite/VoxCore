@@ -2,11 +2,8 @@
 #include "vox/world/World.h"
 
 #include "vox/events/Chunk.h"
-#include "vox/world/data/BlockQueryHelper.h"
-#include "vox/world/ChunkSize.h"
 #include "vox/world/Side.h"
-#include "vox/world/util/RayTrace.h"
-#include "vox/world/util/RayBresenham.h"
+#include "vox/world/ChunkSize.h"
 
 #include "hen/core/Core.h"
 #include "hen/event/EventBus.h"
@@ -48,32 +45,6 @@ vox::data::BlockData vox::world::World::getBlock(const glm::ivec3& pos) const
 		return chunk->getBlock(pos & chunk::SIZE_MINUS_ONE);
 	return 0;
 }
-void vox::world::World::setBlock(unsigned int id, const glm::ivec3& pos)
-{
-	auto query = data::BlockQueryHelper::writeBlock(data::BlockData{ id, glm::uvec4{} }, pos);
-	acceptQuery(query);
-}
-void vox::world::World::setBlockCylinder(unsigned int id, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
-{
-	auto query = data::BlockQueryHelper::writeCylinder(data::BlockData{ id, glm::uvec4{} }, start, end, axis);
-	acceptQuery(query);
-}
-void vox::world::World::setBlockEllipse(unsigned int id, const glm::ivec3& start, const glm::ivec3& end)
-{
-	auto query = data::BlockQueryHelper::writeEllipse(data::BlockData{ id, glm::uvec4{} }, start, end);
-	acceptQuery(query);
-}
-void vox::world::World::setBlockLine(unsigned int id, const glm::ivec3& start, const glm::ivec3& end)
-{
-	auto query = data::BlockQueryHelper::writeLine(data::BlockData{ id, glm::uvec4{} }, start, end);
-	acceptQuery(query);
-}
-void vox::world::World::setBlockRectangle(unsigned int id, const glm::ivec3& start, const glm::ivec3& end)
-{
-	auto query = data::BlockQueryHelper::writeRectangle(data::BlockData{ id, glm::uvec4{} }, start, end);
-	acceptQuery(query);
-}
-
 void vox::world::World::acceptQuery(data::ChunkReadQuery& query) const
 {
 	for (auto& chunkQuery : query)

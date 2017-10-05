@@ -61,7 +61,8 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeCylinder(const Bloc
 				blockQuery.add(data, pos);
 		}
 
-		chunkQuery.add(std::move(blockQuery), cpos);
+		if (!chunkQuery.add(std::move(blockQuery), cpos))
+			return chunkQuery;
 	}
 
 	return chunkQuery;
@@ -100,7 +101,8 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeEllipse(const Block
 				blockQuery.add(data, pos);
 		}
 
-		chunkQuery.add(std::move(blockQuery), cpos);
+		if (!chunkQuery.add(std::move(blockQuery), cpos))
+			return chunkQuery;
 	}
 
 	return chunkQuery;
@@ -148,8 +150,13 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeRectangle(const Blo
 
 		BlockWriteQuery blockQuery{ true, false, false };
 		blockQuery.add(data, lowest, highest);
-		chunkQuery.add(std::move(blockQuery), cpos);
+		if (!chunkQuery.add(std::move(blockQuery), cpos))
+			return chunkQuery;
 	}
 
 	return chunkQuery;
+}
+vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeSphere(const BlockData& data, const glm::ivec3& center, int radius)
+{
+	return writeEllipse(data, center - radius, center + radius);
 }

@@ -20,6 +20,7 @@ namespace vox
 			ChunkWriteQuery writeEllipse(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end);
 			ChunkWriteQuery writeLine(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end);
 			ChunkWriteQuery writeRectangle(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end);
+			ChunkWriteQuery writeSphere(const BlockData& data, const glm::ivec3& center, int radius);
 		};
 	}
 }
