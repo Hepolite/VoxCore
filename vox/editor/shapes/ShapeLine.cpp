@@ -41,26 +41,28 @@ namespace
 
 void vox::editor::shape::ShapeLine::mesh(std::vector<glm::vec3>& vertices, std::vector<unsigned int>& indices) const
 {
-	std::vector<glm::ivec3> steps;
-	steps.emplace_back(getStart());
-	steps.emplace_back(getStart());
+	std::vector<std::pair<glm::ivec3, glm::ivec3>> steps;
+	glm::ivec3 start = getStart();
+	glm::ivec3 delta;
+	glm::ivec3 pos;
 
 	world::RayBresenham trace{ nullptr, getStart(), getEnd() };
 	while (trace.isValid())
 	{
-		const auto oldPos = trace.getBlockPosition();
-		const auto pos = trace.nextBlockPosition();
-		const auto delta = pos - oldPos;
+		const auto nextPos = trace.nextBlockPosition();
+		const auto dir = nextPos - pos;
+		pos = nextPos;
 
-		if (std::abs(delta.x) + std::abs(delta.y) + std::abs(delta.z) != 1)
+		if (!trace.isValid() || std::abs(dir.x) + std::abs(dir.y) + std::abs(dir.z) != 1)
 		{
-			steps.emplace_back(pos);
-			steps.emplace_back(pos);
+			steps.emplace_back(start, start + delta);
+			start = pos;
+			delta = glm::ivec3{};
 		}
 		else
-			steps.back() += delta;
+			delta += dir;
 	}
 
-	for (unsigned int i = 0; i + 1 < steps.size(); i += 2)
-		meshBox(steps[i], steps[i + 1], vertices, indices);
+	for (const auto& step : steps)
+		meshBox(step.first, step.second, vertices, indices);
 }

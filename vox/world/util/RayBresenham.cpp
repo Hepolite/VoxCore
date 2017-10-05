@@ -15,7 +15,7 @@ vox::world::RayBresenham::RayBresenham(const World* world, const glm::ivec3& sta
 
 unsigned int vox::world::RayBresenham::getBlock() const
 {
-	return m_world == nullptr ? 0 : m_world->getBlock(getBlockPosition());
+	return m_world == nullptr ? 0 : m_world->getBlock(getBlockPosition()).getId();
 }
 void vox::world::RayBresenham::next()
 {

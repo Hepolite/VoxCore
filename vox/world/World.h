@@ -2,6 +2,7 @@
 #pragma once
 
 #include "vox/world/Chunk.h"
+#include "vox/world/data/ChunkQuery.h"
 
 #include "hen/util/MathEnum.h"
 
@@ -18,9 +19,9 @@ namespace vox
 	{
 		class World
 		{
-		public:
 			using ChunkMap = std::unordered_map<glm::ivec3, Chunk>;
 
+		public:
 			World() = delete;
 			World(const std::string& name) : m_name(name) {}
 
@@ -29,12 +30,15 @@ namespace vox
 			const Chunk* getChunk(const glm::ivec3& cpos) const;
 			inline const ChunkMap& getChunks() const { return m_chunks; }
 
-			unsigned int getBlock(const glm::ivec3& pos) const;
 			void setBlock(unsigned int id, const glm::ivec3& pos);
 			void setBlockCylinder(unsigned int id, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis);
 			void setBlockEllipse(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
 			void setBlockLine(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
 			void setBlockRectangle(unsigned int id, const glm::ivec3& start, const glm::ivec3& end);
+
+			data::BlockData getBlock(const glm::ivec3& pos) const;
+			void acceptQuery(data::ChunkReadQuery& query) const;
+			void acceptQuery(data::ChunkWriteQuery& query);
 
 		private:
 			Chunk* getChunk(const glm::ivec3& cpos);

@@ -15,7 +15,7 @@ namespace vox
 			RayBresenham(const World* world, const glm::ivec3& start, const glm::ivec3& end);
 			~RayBresenham() = default;
 
-			inline bool isValid() const { return m_currentStep < m_totalSteps; }
+			inline bool isValid() const { return m_currentStep <= m_totalSteps; }
 
 			inline unsigned int nextBlock() { next(); return getBlock(); }
 			inline glm::ivec3 nextBlockPosition() { next(); return getBlockPosition(); }

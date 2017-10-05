@@ -2,6 +2,7 @@
 #include "vox/world/Chunk.h"
 
 #include "vox/world/ChunkSize.h"
+#include "vox/world/data/ChunkDataTranslator.h"
 
 void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 {
@@ -14,68 +15,60 @@ void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 		neighbor->m_neighbors[side.opposite.id] = this;
 }
 
-vox::data::BlockQuery vox::world::Chunk::getBlock(const glm::ivec3& pos) const
+vox::data::BlockData vox::world::Chunk::getBlock(const glm::uvec3& pos) const
 {
-	return m_data.requestBlock(pos);
+	return m_data->getBlock(pos);
 }
-vox::data::BlockQueryList vox::world::Chunk::getBlocks(const std::vector<glm::ivec3>& locations) const
+void vox::world::Chunk::acceptQuery(data::BlockReadQuery& query) const
 {
-	return m_data.requestBlocks(locations);
+	m_data->acceptQuery(query);
 }
-vox::data::BlockQueryRectangle vox::world::Chunk::getBlocks(const glm::ivec3& start, const glm::ivec3& end) const
+void vox::world::Chunk::acceptQuery(data::BlockWriteQuery& query)
 {
-	return m_data.requestBlocks(start, end);
-}
+	data::ChunkDataTranslator translator;
 
-void vox::world::Chunk::setBlock(const data::BlockQuery& query)
-{
-	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
-	m_data.assignChange(query);
-	m_data.optimizeDataFormat();
-}
-void vox::world::Chunk::setBlocks(const data::BlockQueryList& query)
-{
-	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
-	m_data.assignChange(query);
-	m_data.optimizeDataFormat();
-}
-void vox::world::Chunk::setBlocks(const data::BlockQueryRectangle& query)
-{
-	m_data.setDataFormat(data::ChunkCompositeData::DataFormat::FLAT);
-	m_data.assignChange(query);
-	m_data.optimizeDataFormat();
+	if (m_data == nullptr)
+		m_data = &m_dataFlat;
+	else if (m_data == &m_dataRLE)
+	{
+		m_data = &m_dataFlat;
+		m_dataFlat = translator.toFlat(m_dataRLE);
+		m_dataRLE.forget();
+	}
+
+	m_data->acceptQuery(query);
+
+	m_data = &m_dataRLE;
+	m_dataRLE = translator.toRLE(m_dataFlat);
+	m_dataFlat.forget();
 }
 
 vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 {
-	const glm::ivec3 min{ 0 };
-	const glm::ivec3 max{ chunk::SIZE };
+	const unsigned int SIZE = static_cast<unsigned int>(chunk::SIZE);
+	const unsigned int SIZE_MINUS_ONE = static_cast<unsigned int>(chunk::SIZE_MINUS_ONE);
 
-	data::BlockRegion data{ glm::ivec3{ -1 }, glm::ivec3{ chunk::SIZE + 2 } };
+	data::BlockRegion region{ glm::ivec3{ -1 }, glm::ivec3{ chunk::SIZE + 2 } };
 
-	m_data.reguestBlocks(data, min, max, glm::ivec3{});
+	m_data->fillRegion(region, glm::uvec3{}, glm::ivec3{}, glm::uvec3{ SIZE });
 	if (const auto neightbor = getNeighbor(Side::NORTH))
-		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ min.x + 1, max.y, max.z }, glm::ivec3{ chunk::SIZE, 0, 0 });
+		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::SOUTH))
-		neightbor->m_data.reguestBlocks(data, glm::ivec3{ max.x - 1, min.y, min.z }, max, glm::ivec3{ -chunk::SIZE, 0, 0 });
+		neightbor->m_data->fillRegion(region, glm::ivec3{ SIZE_MINUS_ONE, 0, 0 }, glm::ivec3{ -chunk::SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::WEST))
-		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ max.x, min.y + 1, max.z }, glm::ivec3{ 0, chunk::SIZE, 0 });
+		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ 0, SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::EAST))
-		neightbor->m_data.reguestBlocks(data, glm::ivec3{ min.x, max.y - 1, min.z }, max, glm::ivec3{ 0, -chunk::SIZE, 0 });
+		neightbor->m_data->fillRegion(region, glm::ivec3{ 0, SIZE_MINUS_ONE, 0 }, glm::ivec3{ 0, -chunk::SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::TOP))
-		neightbor->m_data.reguestBlocks(data, min, glm::ivec3{ max.x, max.y, min.z + 1 }, glm::ivec3{ 0, 0, chunk::SIZE });
+		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ 0, 0, SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 	if (const auto neightbor = getNeighbor(Side::BOTTOM))
-		neightbor->m_data.reguestBlocks(data, glm::ivec3{ min.x, min.y, max.z - 1 }, max, glm::ivec3{ 0, 0, -chunk::SIZE });
+		neightbor->m_data->fillRegion(region, glm::ivec3{ 0, 0, SIZE_MINUS_ONE }, glm::ivec3{ 0, 0, -chunk::SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 
-	return data;
-}
-vox::data::ChunkDataRLE vox::world::Chunk::getCompressedData() const
-{
-	return data::ChunkDataRLE{};
+	return region;
 }
 
 bool vox::world::Chunk::isEmpty() const
 {
-	return m_data.getDataFormat() == data::ChunkCompositeData::DataFormat::NONE;
+	return m_dataFlat.empty() && m_dataRLE.empty();
 }
 

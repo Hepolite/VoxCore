@@ -23,7 +23,7 @@ vox::world::RayTrace::RayTrace(const World* world, const glm::vec3& start, const
 
 unsigned int vox::world::RayTrace::getBlock() const
 {
-	return m_world == nullptr ? 0 : m_world->getBlock(getBlockPosition());
+	return m_world == nullptr ? 0 : m_world->getBlock(getBlockPosition()).getId();
 }
 void vox::world::RayTrace::next()
 {
