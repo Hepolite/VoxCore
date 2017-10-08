@@ -6,6 +6,7 @@
 #include "vox/editor/shapes/ShapeCylinder.h"
 #include "vox/editor/shapes/ShapeEllipse.h"
 #include "vox/editor/shapes/ShapeLine.h"
+#include "vox/editor/shapes/ShapePoint.h"
 #include "vox/editor/utility/CameraHandler.h"
 #include "vox/editor/utility/Cursor.h"
 #include "vox/editor/utility/Grid.h"
@@ -58,6 +59,7 @@ namespace vox
 			shape::ShapeCylinder m_shapeCylinder;
 			shape::ShapeEllipse m_shapeEllipse;
 			shape::ShapeLine m_shapeLine;
+			shape::ShapePoint m_shapePoint;
 			shape::Shape* m_shape = nullptr;
 
 			hen::render::Renderer m_renderer;

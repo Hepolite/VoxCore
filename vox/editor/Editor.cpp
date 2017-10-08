@@ -73,6 +73,7 @@ void vox::editor::Editor::initScriptData()
 	helper.addGlobalVariable(&m_shapeCylinder, "ShapeCylinder");
 	helper.addGlobalVariable(&m_shapeEllipse, "ShapeEllipse");
 	helper.addGlobalVariable(&m_shapeLine, "ShapeLine");
+	helper.addGlobalVariable(&m_shapePoint, "ShapePoint");
 	helper.addFunction(&Editor::setShape, "setShape");
 	helper.addFunction(&Editor::getShape, "getShape");
 
@@ -81,6 +82,7 @@ void vox::editor::Editor::initScriptData()
 	helper.addRelation<shape::Shape, shape::ShapeCylinder>();
 	helper.addRelation<shape::Shape, shape::ShapeEllipse>();
 	helper.addRelation<shape::Shape, shape::ShapeLine>();
+	helper.addRelation<shape::Shape, shape::ShapePoint>();
 	helper.addFunction(&shape::Shape::getName, "getName");
 	helper.addFunction(&shape::Shape::setSizeX, "setSizeX");
 	helper.addFunction(&shape::Shape::setSizeY, "setSizeY");

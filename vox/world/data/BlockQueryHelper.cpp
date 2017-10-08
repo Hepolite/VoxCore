@@ -19,8 +19,8 @@ vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeBlock(const BlockDa
 {
 	ChunkWriteQuery chunkQuery;
 	BlockWriteQuery blockQuery{ true, false, false };
-	blockQuery.add(data, pos >> chunk::SIZE_LG);
-	chunkQuery.add(std::move(blockQuery), pos & chunk::SIZE_MINUS_ONE);
+	blockQuery.add(data, pos & chunk::SIZE_MINUS_ONE);
+	chunkQuery.add(std::move(blockQuery), pos >> chunk::SIZE_LG);
 	return chunkQuery;
 }
 vox::data::ChunkWriteQuery vox::data::BlockQueryHelper::writeCylinder(const BlockData & data, const glm::ivec3 & start, const glm::ivec3 & end, hen::math::Axis axis)
