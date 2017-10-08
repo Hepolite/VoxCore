@@ -7,6 +7,7 @@
 #include "vox/world/Side.h"
 
 #include <memory>
+#include <mutex>
 
 namespace vox
 {
@@ -24,8 +25,10 @@ namespace vox
 
 			data::BlockRegion getMeshingData() const;
 			data::ChunkDataRLE getStoringData() const;
+			void setChunkData(data::ChunkDataRLE&& data);
 
-			bool isEmpty() const;
+			unsigned int memusage() const;
+			bool empty() const;
 
 		private:
 			Chunk* m_neighbors[Side::COUNT] = { nullptr };
@@ -33,6 +36,8 @@ namespace vox
 			data::ChunkDataFlat m_dataFlat;
 			data::ChunkDataRLE m_dataRLE;
 			data::ChunkData* m_data = nullptr;
+
+			mutable std::mutex m_mutex;
 		};
 	}
 }

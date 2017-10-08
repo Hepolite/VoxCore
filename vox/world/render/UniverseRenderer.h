@@ -48,6 +48,7 @@ namespace vox
 				hen::texture::Texture2DArray m_texture;
 				std::vector<BlockRenderer> m_blockRenderers;
 
+				hen::event::Listener m_chunkCreateListener;
 				hen::event::Listener m_chunkDestroyListener;
 				hen::event::Listener m_chunkBlockChangeListener;
 

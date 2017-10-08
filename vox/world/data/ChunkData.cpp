@@ -26,6 +26,10 @@ void vox::data::ChunkDataFlat::swapBlock(BlockData& data, unsigned int index)
 		std::swap(m_data[index], data);
 }
 
+unsigned int vox::data::ChunkDataFlat::memusage() const
+{
+	return m_data.size() * sizeof(BlockData);
+}
 bool vox::data::ChunkDataFlat::empty() const
 {
 	return m_data.empty();
@@ -92,9 +96,18 @@ vox::data::BlockData vox::data::ChunkDataRLE::getBlock(unsigned int index) const
 	return m_data[center].first;
 }
 
+unsigned int vox::data::ChunkDataRLE::memusage() const
+{
+	return m_data.size() * sizeof(Node);
+}
 bool vox::data::ChunkDataRLE::empty() const
 {
 	return m_data.empty() || (m_data.size() == 1 && m_data.front().first.getId() == 0);
+}
+void vox::data::ChunkDataRLE::expand()
+{
+	if (empty())
+		m_data.emplace_back(BlockData{}, chunk::VOLUME);
 }
 void vox::data::ChunkDataRLE::forget()
 {
@@ -144,5 +157,7 @@ void vox::data::ChunkDataRLE::acceptQuery(BlockReadQuery& query) const
 void vox::data::ChunkDataRLE::acceptQuery(BlockWriteQuery& query)
 {
 	throw std::exception("Not implemented");
+	// expand();
+	// Add blocks where they should be 
 }
 

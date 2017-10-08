@@ -17,14 +17,17 @@ void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 
 vox::data::BlockData vox::world::Chunk::getBlock(const glm::uvec3& pos) const
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
 	return m_data->getBlock(pos);
 }
 void vox::world::Chunk::acceptQuery(data::BlockReadQuery& query) const
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
 	m_data->acceptQuery(query);
 }
 void vox::world::Chunk::acceptQuery(data::BlockWriteQuery& query)
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
 	data::ChunkDataTranslator translator;
 
 	if (m_data == nullptr)
@@ -45,6 +48,8 @@ void vox::world::Chunk::acceptQuery(data::BlockWriteQuery& query)
 
 vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
+
 	const unsigned int SIZE = static_cast<unsigned int>(chunk::SIZE);
 	const unsigned int SIZE_MINUS_ONE = static_cast<unsigned int>(chunk::SIZE_MINUS_ONE);
 
@@ -68,14 +73,28 @@ vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 }
 vox::data::ChunkDataRLE vox::world::Chunk::getStoringData() const
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
 	if (m_data != &m_dataFlat)
 		return m_dataRLE;
 	data::ChunkDataTranslator translator;
 	return translator.toRLE(m_dataFlat);
 }
-
-bool vox::world::Chunk::isEmpty() const
+void vox::world::Chunk::setChunkData(data::ChunkDataRLE&& data)
 {
+	std::lock_guard<std::mutex> guard{ m_mutex };
+	m_dataFlat.forget();
+	m_dataRLE = std::move(data);
+	m_data = &m_dataRLE;
+}
+
+unsigned int vox::world::Chunk::memusage() const
+{
+	std::lock_guard<std::mutex> guard{ m_mutex };
+	return m_dataFlat.memusage() + m_dataRLE.memusage();;
+}
+bool vox::world::Chunk::empty() const
+{
+	std::lock_guard<std::mutex> guard{ m_mutex };
 	return m_dataFlat.empty() && m_dataRLE.empty();
 }
 

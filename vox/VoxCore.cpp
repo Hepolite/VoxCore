@@ -3,6 +3,7 @@
 
 #include "vox/VoxScriptData.h"
 #include "vox/world/Universe.h"
+#include "vox/world/io/UniverseDataFile.h"
 #include "vox/world/render/UniverseRenderer.h"
 
 #include <Log.h>
@@ -11,6 +12,7 @@ class vox::VoxCore::Internal
 {
 public:
 	world::Universe m_universe;
+	world::io::UniverseDataFile m_universeDataFile;
 	world::render::UniverseRenderer m_universeRenderer;
 
 	script::VoxScriptData m_scriptData;

@@ -27,7 +27,7 @@ namespace vox
 				WorldRenderer& operator=(const WorldRenderer&) = delete;
 				WorldRenderer& operator=(WorldRenderer&&) = delete;
 
-				void onProcess();
+				void onProcess(const World* world);
 				void onRender(float dt) const;
 
 				void scheduleMeshTask(const World* world, const glm::ivec3& pos);

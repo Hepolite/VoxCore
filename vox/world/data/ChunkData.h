@@ -19,6 +19,9 @@ namespace vox
 			virtual void acceptQuery(BlockReadQuery& query) const = 0;
 			virtual void acceptQuery(BlockWriteQuery& query) = 0;
 
+			virtual unsigned int memusage() const = 0;
+			virtual bool empty() const = 0;
+
 		protected:
 			unsigned int getIndex(const glm::uvec3& pos) const;
 		};
@@ -33,7 +36,8 @@ namespace vox
 			virtual void acceptQuery(BlockReadQuery& query) const override final;
 			virtual void acceptQuery(BlockWriteQuery& query) override final;
 
-			bool empty() const;
+			virtual unsigned int memusage() const override final;
+			virtual bool empty() const override final;
 			void expand();
 			void forget();
 
@@ -57,8 +61,13 @@ namespace vox
 			virtual void acceptQuery(BlockReadQuery& query) const override final;
 			virtual void acceptQuery(BlockWriteQuery& query) override final;
 
-			bool empty() const;
+			virtual unsigned int memusage() const override final;
+			virtual bool empty() const override final;
+			void expand();
 			void forget();
+
+			NodeList& getRawData() { return m_data; }
+			const NodeList& getRawData() const { return m_data; }
 
 		private:
 			BlockData getBlock(unsigned int index) const;

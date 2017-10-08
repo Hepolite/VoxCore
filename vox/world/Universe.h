@@ -34,7 +34,7 @@ namespace vox
 
 		private:
 			void loadBlocks();
-			void loadWorlds();
+			void loadRegistry();
 
 			BlockRegistry m_registry;
 

@@ -54,6 +54,8 @@ vox::script::VoxScriptData::VoxScriptData()
 		helper.addFunction<void, world::World, data::ChunkReadQuery&>(&world::World::acceptQuery, "acceptQuery");
 		helper.addFunction<void, world::World, data::ChunkWriteQuery&>(&world::World::acceptQuery, "acceptQuery");
 
+		helper.addFunction(&world::World::debugMemusage, "debugWorldMemory");
+
 		// Block registry
 		helper.addFunction(&world::BlockRegistry::getId, "getId");
 		helper.addFunction(&world::BlockRegistry::getName, "getName");

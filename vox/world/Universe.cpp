@@ -1,8 +1,11 @@
 
 #include "vox/world/Universe.h"
 
+#include "vox/events/World.h"
 #include "vox/world/data/BlockQueryHelper.h"
 
+#include "hen/core/Core.h"
+#include "hen/event/EventBus.h"
 #include "hen/io/File.h"
 #include "hen/io/Folder.h"
 #include "hen/io/XMLFile.h"
@@ -28,6 +31,7 @@ vox::world::World* vox::world::Universe::createWorld(const std::string& name)
 	auto ptr = world.get();
 	m_worlds[name] = std::move(world);
 	LOG_INFO << "Created world " << name;
+	hen::Core::getEventBus().post(events::WorldCreate{ ptr });
 	return ptr;
 }
 vox::world::World* vox::world::Universe::getWorld(const std::string& name) const
@@ -46,7 +50,7 @@ std::vector<vox::world::World*> vox::world::Universe::getWorlds() const
 void vox::world::Universe::onLoad()
 {
 	loadBlocks();
-	loadWorlds();
+	loadRegistry();
 }
 void vox::world::Universe::loadBlocks()
 {
@@ -61,41 +65,13 @@ void vox::world::Universe::loadBlocks()
 			m_registry.insert(name, id);
 		}
 	}
-
+}
+void vox::world::Universe::loadRegistry()
+{
 	hen::io::Folder blockFolder{ "data/universe/blocks" };
 	for (const auto& file : blockFolder.getFiles())
 	{
 		if (!m_registry.has(file.getName()))
 			m_registry.add(file.getName());
-	}
-}
-void vox::world::Universe::loadWorlds()
-{
-	hen::io::Folder worldFolder{ "data/universe/worlds" };
-	for (const auto& file : worldFolder.getFiles())
-	{
-		auto world = createWorld(file.getName());
-
-		hen::io::XMLFile xmlFile{ file };
-		const auto& doc = xmlFile.open();
-		for (auto& data = doc.child("data").first_child(); data; data = data.next_sibling())
-		{
-			const std::string name = data.name();
-			const data::BlockData id{ m_registry.getId(data.attribute("type").as_string()), glm::ivec4{} };
-			const glm::ivec3 start = hen::string::as_ivec3(data.attribute("start").as_string());
-
-			data::ChunkWriteQuery query;
-			if (name == "point")
-				query = data::BlockQueryHelper::writeBlock(id, start);
-			else if (name == "line")
-				query = data::BlockQueryHelper::writeLine(id, start, hen::string::as_ivec3(data.attribute("end").as_string()));
-			else if (name == "rectangle")
-				query = data::BlockQueryHelper::writeRectangle(id, start, hen::string::as_ivec3(data.attribute("end").as_string()));
-			else if (name == "ellipse")
-				query = data::BlockQueryHelper::writeEllipse(id, start, hen::string::as_ivec3(data.attribute("end").as_string()));
-			else if (name == "sphere")
-				query = data::BlockQueryHelper::writeSphere(id, start, data.attribute("radius").as_int());
-			world->acceptQuery(query);
-		}
 	}
 }

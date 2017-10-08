@@ -14,6 +14,23 @@
 vox::world::render::UniverseRenderer::UniverseRenderer()
 {
 	auto& eventBus = hen::Core::getEventBus();
+	m_chunkCreateListener = eventBus.registerCallback<events::ChunkCreate>([this](events::ChunkCreate& event)
+	{
+		const auto world = event.getWorld();
+		const auto cpos = event.getChunkPos();
+		const auto& result = m_renderers.find(world);
+		if (result == m_renderers.end())
+			return;
+		auto& renderer = result->second;
+
+		renderer.scheduleMeshTask(world, cpos);
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ -1, 0, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ 1, 0, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ 0, -1, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ 0, 1, 0 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ 0, 0, -1 });
+		renderer.scheduleMeshTask(world, cpos + glm::ivec3{ 0, 0, 1 });
+	});
 	m_chunkDestroyListener = eventBus.registerCallback<events::ChunkDestroy>([this](events::ChunkDestroy& event)
 	{
 		const auto world = event.getWorld();
@@ -58,6 +75,7 @@ vox::world::render::UniverseRenderer::UniverseRenderer()
 vox::world::render::UniverseRenderer::~UniverseRenderer()
 {
 	auto& eventBus = hen::Core::getEventBus();
+	eventBus.unregisterListener(m_chunkCreateListener);
 	eventBus.unregisterListener(m_chunkDestroyListener);
 	eventBus.unregisterListener(m_chunkBlockChangeListener);
 }
@@ -65,7 +83,7 @@ vox::world::render::UniverseRenderer::~UniverseRenderer()
 void vox::world::render::UniverseRenderer::onProcess()
 {
 	for (auto& renderer : m_renderers)
-		renderer.second.onProcess();
+		renderer.second.onProcess(renderer.first);
 }
 void vox::world::render::UniverseRenderer::onRender(float dt) const
 {
@@ -115,7 +133,7 @@ void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world
 		{
 			auto& renderer = it.first->second;
 			for (const auto& chunk : world->getChunks())
-				renderer.scheduleMeshTask(world, chunk.first);
+				renderer.scheduleMeshTask(world, chunk);
 		}
 	}
 	else

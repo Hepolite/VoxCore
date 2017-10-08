@@ -8,8 +8,16 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-void vox::world::render::WorldRenderer::onProcess()
+void vox::world::render::WorldRenderer::onProcess(const World* world)
 {
+	while (m_mesher.size() < 50 && !m_meshTasks.empty())
+	{
+		const auto& pos = *m_meshTasks.begin();
+		if (const auto chunk = world->getChunk(pos))
+			m_replacers[pos] = m_mesher.startTask(ChunkMeshTask{ pos, chunk->getMeshingData() });
+		m_meshTasks.erase(pos);
+	}
+
 	ChunkMeshTask result;
 	while (m_mesher.pollResult(result))
 	{
@@ -39,11 +47,11 @@ void vox::world::render::WorldRenderer::onRender(float dt) const
 
 void vox::world::render::WorldRenderer::scheduleMeshTask(const World* world, const glm::ivec3& pos)
 {
-	if (const auto chunk = world->getChunk(pos))
-		m_replacers[pos] = m_mesher.startTask(ChunkMeshTask{ pos, chunk->getMeshingData() });
+	m_meshTasks.emplace(pos);
 }
 void vox::world::render::WorldRenderer::scheduleMeshRemoval(const glm::ivec3& pos)
 {
+	m_meshTasks.erase(pos);
 	m_renderers.erase(pos);
 	m_replacers.erase(pos);
 }

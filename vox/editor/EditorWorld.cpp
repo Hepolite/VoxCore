@@ -19,11 +19,12 @@ vox::editor::EditorWorld::EditorWorld()
 	camera.setPosition(glm::vec3{ -10.5f, -10.5f, 15.5f });
 	camera.lookTowards(glm::vec3{ 10.5f, 10.5f, 5.5f });
 
-	m_world = VoxCore::getUniverse().getWorld("test");
-	VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
+	m_world = VoxCore::getUniverse().createWorld("test");
+	//VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
 }
 vox::editor::EditorWorld::~EditorWorld()
 {
+	VoxCore::getUniverseRenderer().setWorldVisibility(m_world, false);
 }
 
 void vox::editor::EditorWorld::onProcess(float dt)
@@ -45,6 +46,9 @@ void vox::editor::EditorWorld::onProcess(float dt)
 			break;
 		}
 	}
+
+	if (keyboard.isPressed(ALLEGRO_KEY_V))
+		VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
 }
 void vox::editor::EditorWorld::onRender(float dt) const
 {
