@@ -30,9 +30,22 @@ vox::world::World* vox::world::Universe::createWorld(const std::string& name)
 	auto world = std::make_unique<World>(name);
 	auto ptr = world.get();
 	m_worlds[name] = std::move(world);
-	LOG_INFO << "Created world " << name;
 	hen::Core::getEventBus().post(events::WorldCreate{ ptr });
+	LOG_INFO << "Created world " << name;
 	return ptr;
+}
+void vox::world::Universe::destroyWorld(const std::string& name)
+{
+	auto world = getWorld(name);
+	if (world == nullptr)
+	{
+		LOG_WARNING << "Attempted to destroy a world with name " << name << ", which does not exist";
+		return;
+	}
+	
+	hen::Core::getEventBus().post(events::WorldDestroy{ world });
+	m_worlds.erase(name);
+	LOG_INFO << "Destroyed world " << name;
 }
 vox::world::World* vox::world::Universe::getWorld(const std::string& name) const
 {

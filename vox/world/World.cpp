@@ -10,14 +10,6 @@
 
 #include <Log.h>
 
-std::vector<glm::ivec3> vox::world::World::getChunks() const
-{
-	std::lock_guard<std::mutex> guard{ m_mutex };
-	std::vector<glm::ivec3> chunks;
-	for (const auto& pair : m_chunks)
-		chunks.push_back(pair.first);
-	return chunks;
-}
 const vox::world::Chunk* vox::world::World::getChunk(const glm::ivec3& cpos) const
 {
 	const auto& loc = m_chunks.find(cpos);
@@ -51,14 +43,20 @@ void vox::world::World::deleteChunk(const glm::ivec3& cpos)
 
 vox::data::BlockData vox::world::World::getBlock(const glm::ivec3& pos) const
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	if (const auto chunk = getChunk(pos >> chunk::SIZE_LG))
 		return chunk->getBlock(pos & chunk::SIZE_MINUS_ONE);
 	return 0;
 }
+std::vector<glm::ivec3> vox::world::World::getChunkCoordinates() const
+{
+	std::vector<glm::ivec3> chunks;
+	for (const auto& pair : m_chunks)
+		chunks.push_back(pair.first);
+	return chunks;
+}
+
 void vox::world::World::acceptQuery(data::ChunkReadQuery& query) const
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	for (auto& chunkQuery : query)
 	{
 		if (const auto chunk = getChunk(chunkQuery.second))
@@ -67,7 +65,6 @@ void vox::world::World::acceptQuery(data::ChunkReadQuery& query) const
 }
 void vox::world::World::acceptQuery(data::ChunkWriteQuery& query)
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	for (auto& chunkQuery : query)
 		getOrCreateChunk(chunkQuery.second).acceptQuery(chunkQuery.first);
 
@@ -87,12 +84,10 @@ void vox::world::World::acceptQuery(data::ChunkWriteQuery& query)
 
 void vox::world::World::injectChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE&& data)
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	getOrCreateChunk(pos).injectChunkData(std::move(data));
 }
 bool vox::world::World::exportChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE& data) const
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	const auto chunk = getChunk(pos);
 	if (chunk == nullptr || chunk->empty())
 		return false;
@@ -101,7 +96,6 @@ bool vox::world::World::exportChunkStorageData(const glm::ivec3& pos, data::Chun
 }
 bool vox::world::World::exportChunkRenderData(const glm::ivec3& pos, data::BlockRegion& data) const
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	const auto chunk = getChunk(pos);
 	if (chunk == nullptr || chunk->empty())
 		return false;
@@ -111,7 +105,6 @@ bool vox::world::World::exportChunkRenderData(const glm::ivec3& pos, data::Block
 
 void vox::world::World::debugMemusage() const
 {
-	std::lock_guard<std::mutex> guard{ m_mutex };
 	LOG_DEBUG << "====================================";
 	LOG_DEBUG << "Memory dump for world " << m_name << ":";
 	LOG_DEBUG << "====================================";

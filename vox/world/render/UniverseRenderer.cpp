@@ -40,7 +40,7 @@ vox::world::render::UniverseRenderer::UniverseRenderer()
 			return;
 		auto& renderer = result->second;
 
-		renderer.scheduleMeshTask(world, cpos);
+		renderer.scheduleMeshRemoval(cpos);
 		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { -1, 0, 0 });
 		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 1, 0, 0 });
 		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, -1, 0 });
@@ -132,7 +132,7 @@ void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world
 		if (it.second)
 		{
 			auto& renderer = it.first->second;
-			for (const auto& chunk : world->getChunks())
+			for (const auto& chunk : world->getChunkCoordinates())
 				renderer.scheduleMeshTask(world, chunk);
 		}
 	}

@@ -7,7 +7,6 @@
 #include "vox/world/Side.h"
 
 #include <memory>
-#include <mutex>
 
 namespace vox
 {
@@ -36,8 +35,6 @@ namespace vox
 			data::ChunkDataFlat m_dataFlat;
 			data::ChunkDataRLE m_dataRLE;
 			data::ChunkData* m_data = nullptr;
-
-			mutable std::mutex m_mutex;
 		};
 	}
 }

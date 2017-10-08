@@ -26,6 +26,7 @@ vox::editor::EditorWorld::EditorWorld()
 vox::editor::EditorWorld::~EditorWorld()
 {
 	VoxCore::getUniverseRenderer().setWorldVisibility(m_world, false);
+	VoxCore::getUniverse().destroyWorld("test");
 }
 
 void vox::editor::EditorWorld::onProcess(float dt)

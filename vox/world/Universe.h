@@ -29,6 +29,7 @@ namespace vox
 			inline const BlockRegistry& getRegistry() const { return m_registry; }
 
 			World* createWorld(const std::string& name);
+			void destroyWorld(const std::string& name);
 			World* getWorld(const std::string& name) const;
 			std::vector<World*> getWorlds() const;
 
