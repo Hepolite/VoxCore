@@ -21,6 +21,8 @@ namespace vox
 				UniverseDataFile();
 				~UniverseDataFile();
 
+				void onProcess();
+
 			private:
 				void load(world::World* world);
 				void save(world::World* world);

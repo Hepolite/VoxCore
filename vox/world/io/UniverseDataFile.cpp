@@ -34,6 +34,12 @@ vox::world::io::UniverseDataFile::~UniverseDataFile()
 	eventBus.unregisterListener(m_chunkBlockChangeListener);
 }
 
+void vox::world::io::UniverseDataFile::onProcess()
+{
+	for (auto& loader : m_loaders)
+		loader.second.onProcess();
+}
+
 void vox::world::io::UniverseDataFile::load(world::World* world)
 {
 	m_loaders.emplace(std::piecewise_construct, std::make_tuple(world), std::make_tuple(world));

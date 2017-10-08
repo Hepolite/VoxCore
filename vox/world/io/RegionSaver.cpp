@@ -22,11 +22,8 @@ void vox::world::io::RegionSaver::saveToDisk()
 		for (pos.y = 0; pos.y < 16; ++pos.y)
 		for (pos.z = 0; pos.z < 16; ++pos.z)
 		{
-			const auto chunk = m_world->getChunk(m_pos * 16 + pos);
-			if (chunk == nullptr)
-				continue;
-			const auto data = chunk->getStoringData();
-			if (data.empty())
+			data::ChunkDataRLE data;
+			if (!m_world->exportChunkStorageData(m_pos * 16 + pos, data))
 				continue;
 
 			stream << pos.x << " " << pos.y << " " << pos.z << " " << data.getRawData().size() << " ";

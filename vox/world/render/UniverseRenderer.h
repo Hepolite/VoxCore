@@ -39,6 +39,7 @@ namespace vox
 				inline const std::vector<BlockRenderer> getBlockRenderers() const { return m_blockRenderers; }
 
 				void setWorldVisibility(const World* world, bool visible);
+				bool getWorldVisibility(const World* world) const;
 
 			private:
 				void loadRenderers(const BlockRegistry& registry);

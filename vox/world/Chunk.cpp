@@ -79,7 +79,7 @@ vox::data::ChunkDataRLE vox::world::Chunk::getStoringData() const
 	data::ChunkDataTranslator translator;
 	return translator.toRLE(m_dataFlat);
 }
-void vox::world::Chunk::setChunkData(data::ChunkDataRLE&& data)
+void vox::world::Chunk::injectChunkData(data::ChunkDataRLE&& data)
 {
 	std::lock_guard<std::mutex> guard{ m_mutex };
 	m_dataFlat.forget();

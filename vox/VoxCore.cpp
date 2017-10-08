@@ -42,6 +42,10 @@ vox::world::Universe& vox::VoxCore::getUniverse()
 {
 	return m_internal->m_universe;
 }
+vox::world::io::UniverseDataFile & vox::VoxCore::getUniverseDataFile()
+{
+	return m_internal->m_universeDataFile;
+}
 vox::world::render::UniverseRenderer& vox::VoxCore::getUniverseRenderer()
 {
 	return m_internal->m_universeRenderer;

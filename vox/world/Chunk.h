@@ -25,7 +25,7 @@ namespace vox
 
 			data::BlockRegion getMeshingData() const;
 			data::ChunkDataRLE getStoringData() const;
-			void setChunkData(data::ChunkDataRLE&& data);
+			void injectChunkData(data::ChunkDataRLE&& data);
 
 			unsigned int memusage() const;
 			bool empty() const;

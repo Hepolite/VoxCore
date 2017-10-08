@@ -25,22 +25,29 @@ namespace vox
 
 			inline const std::string& getName() const { return m_name; }
 
-			Chunk& getOrCreateChunk(const glm::ivec3& cpos);
-			void deleteChunk(const glm::ivec3& cpos);
-			Chunk* getChunk(const glm::ivec3& cpos);
-			const Chunk* getChunk(const glm::ivec3& cpos) const;
-			std::vector<glm::ivec3> getChunks() const;
-
 			data::BlockData getBlock(const glm::ivec3& pos) const;
 			void acceptQuery(data::ChunkReadQuery& query) const;
 			void acceptQuery(data::ChunkWriteQuery& query);
 
+			void injectChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE&& data);
+			bool exportChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE& data) const;
+			bool exportChunkRenderData(const glm::ivec3& pos, data::BlockRegion& data) const;
+
+			std::vector<glm::ivec3> getChunks() const;
+
 			void debugMemusage() const;
 
 		private:
+			Chunk& getOrCreateChunk(const glm::ivec3& cpos);
+			void deleteChunk(const glm::ivec3& cpos);
+			Chunk* getChunk(const glm::ivec3& cpos);
+			const Chunk* getChunk(const glm::ivec3& cpos) const;
+
 			const std::string m_name;
 
 			ChunkMap m_chunks;
+
+			mutable std::mutex m_mutex;
 		};
 	}
 }

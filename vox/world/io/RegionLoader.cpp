@@ -13,7 +13,7 @@ void vox::world::io::RegionLoader::loadFromDisk()
 	std::ifstream stream{ getFilepath() };
 	if (stream.is_open())
 	{
-		glm::ivec3 pos;
+		glm::uvec3 pos;
 		unsigned int size, block, count;
 		while (stream >> pos.x >> pos.y >> pos.z >> size)
 		{
@@ -23,10 +23,33 @@ void vox::world::io::RegionLoader::loadFromDisk()
 				stream >> block >> count;
 				data.getRawData().emplace_back(block, count);
 			}
-			m_world->getOrCreateChunk(m_pos * 16 + pos).setChunkData(std::move(data));
+			pushData(pos, std::move(data));
 		}
 	}
 	stream.close();
+	m_done = true;
+}
+
+bool vox::world::io::RegionLoader::hasData() const
+{
+	std::lock_guard<std::mutex> guard{ m_mutex };
+	return !m_done || !m_data.empty();
+}
+bool vox::world::io::RegionLoader::pollData(glm::uvec3& pos, data::ChunkDataRLE& data)
+{
+	std::lock_guard<std::mutex> guard{ m_mutex };
+	if (m_data.empty())
+		return false;
+	const auto& first = m_data.begin();
+	pos = first->first;
+	std::swap(data, first->second);
+	m_data.erase(pos);
+	return true;
+}
+void vox::world::io::RegionLoader::pushData(const glm::uvec3& pos, data::ChunkDataRLE&& data)
+{
+	std::lock_guard<std::mutex> guard{ m_mutex };
+	m_data.emplace(pos, std::move(data));
 }
 
 std::string vox::world::io::RegionLoader::getFilepath() const

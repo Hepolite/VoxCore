@@ -2,6 +2,7 @@
 #include "vox/editor/EditorWorld.h"
 
 #include "vox/VoxCore.h"
+#include "vox/world/io/UniverseDataFile.h"
 #include "vox/world/render/UniverseRenderer.h"
 #include "vox/world/Universe.h"
 #include "vox/world/World.h"
@@ -20,7 +21,7 @@ vox::editor::EditorWorld::EditorWorld()
 	camera.lookTowards(glm::vec3{ 10.5f, 10.5f, 5.5f });
 
 	m_world = VoxCore::getUniverse().createWorld("test");
-	//VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
+	VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
 }
 vox::editor::EditorWorld::~EditorWorld()
 {
@@ -31,6 +32,7 @@ void vox::editor::EditorWorld::onProcess(float dt)
 {
 	VoxCore::getUniverse().onProcess(dt);
 	VoxCore::getUniverseRenderer().onProcess();
+	VoxCore::getUniverseDataFile().onProcess();
 	Editor::onProcess(dt);
 
 	const auto& keyboard = hen::Core::getKeyboard();
@@ -48,7 +50,7 @@ void vox::editor::EditorWorld::onProcess(float dt)
 	}
 
 	if (keyboard.isPressed(ALLEGRO_KEY_V))
-		VoxCore::getUniverseRenderer().setWorldVisibility(m_world, true);
+		VoxCore::getUniverseRenderer().setWorldVisibility(m_world, !VoxCore::getUniverseRenderer().getWorldVisibility(m_world));
 }
 void vox::editor::EditorWorld::onRender(float dt) const
 {

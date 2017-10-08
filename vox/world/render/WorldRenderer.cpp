@@ -13,8 +13,10 @@ void vox::world::render::WorldRenderer::onProcess(const World* world)
 	while (m_mesher.size() < 50 && !m_meshTasks.empty())
 	{
 		const auto& pos = *m_meshTasks.begin();
-		if (const auto chunk = world->getChunk(pos))
-			m_replacers[pos] = m_mesher.startTask(ChunkMeshTask{ pos, chunk->getMeshingData() });
+
+		data::BlockRegion data;
+		if (world->exportChunkRenderData(pos, data))
+			m_replacers[pos] = m_mesher.startTask(ChunkMeshTask{ pos, std::move(data) });
 		m_meshTasks.erase(pos);
 	}
 

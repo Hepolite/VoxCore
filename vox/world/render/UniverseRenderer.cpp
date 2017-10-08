@@ -139,3 +139,7 @@ void vox::world::render::UniverseRenderer::setWorldVisibility(const World* world
 	else
 		m_renderers.erase(world);
 }
+bool vox::world::render::UniverseRenderer::getWorldVisibility(const World* world) const
+{
+	return m_renderers.find(world) != m_renderers.end();
+}
