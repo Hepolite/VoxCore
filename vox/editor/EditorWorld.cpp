@@ -12,6 +12,10 @@
 #include "hen/render/RenderCore.h"
 #include "hen/ui/Keyboard.h"
 
+
+#include "hen/render/Mesh.h"
+#include "hen/render/uniform/UniformBlockManager.h"
+
 vox::editor::EditorWorld::EditorWorld()
 {
 	load("data/guis/editor_world.xml");

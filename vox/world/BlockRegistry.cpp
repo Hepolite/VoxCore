@@ -3,7 +3,7 @@
 
 #include <Log.h>
 
-bool vox::world::BlockRegistry::has(const std::string & name) const
+bool vox::world::BlockRegistry::has(const std::string& name) const
 {
 	return m_nameToId.find(name) != m_nameToId.end();
 }
