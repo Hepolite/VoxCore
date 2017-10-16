@@ -18,7 +18,6 @@ vox::editor::Editor::~Editor()
 void vox::editor::Editor::onProcess(float dt)
 {
 	m_cameraHandler.process(dt);
-	m_gui.onProcess(dt);
 
 	m_cursor.process();
 	if (m_cursor.hasValidPosition())

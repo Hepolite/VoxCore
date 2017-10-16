@@ -13,11 +13,10 @@
 
 #include "hen/ui/gui/Gui.h"
 #include "hen/render/Camera.h"
+#include "hen/render/Renderer.h"
 
 #include <functional>
-#include <memory>
 #include <string>
-#include <unordered_map>
 
 namespace vox
 {

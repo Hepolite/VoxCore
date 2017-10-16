@@ -44,7 +44,7 @@ namespace
 	}
 	inline unsigned int mapHorizontal(const glm::ivec3& pos, const vox::world::Side& side, const vox::data::BlockRegion& data, const std::vector<bool>& keys)
 	{
-		const static unsigned int mappings[] = { 0, 1, 3, 2 };
+		const static unsigned int mappings[] = { 0, 3, 1, 2 };
 
 		return mappings[
 			keys[data.getBlock(pos - side.x).getId()] << 0 |

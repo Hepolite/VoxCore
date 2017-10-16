@@ -12,15 +12,12 @@
 #include "hen/render/RenderCore.h"
 #include "hen/ui/Keyboard.h"
 
-
-#include "hen/render/Mesh.h"
-#include "hen/render/uniform/UniformBlockManager.h"
-
 vox::editor::EditorWorld::EditorWorld()
 {
 	load("data/guis/editor_world.xml");
 	m_grid.setAppearance(32.0f, 1.0f);
 	auto& camera = hen::Core::getRenderCore().getMainCamera();
+	camera.setFOV(45.0f);
 	camera.setPosition(glm::vec3{ -10.5f, -10.5f, 15.5f });
 	camera.lookTowards(glm::vec3{ 10.5f, 10.5f, 5.5f });
 
