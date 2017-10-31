@@ -9,10 +9,12 @@
 vox::editor::Editor::Editor()
 {
 	m_renderer = hen::Core::getRenderCore().addRenderer(hen::render::RenderLayer::OPAQUE, [this](float dt) { onRender(dt); });
+	m_gui.open();
 }
 vox::editor::Editor::~Editor()
 {
 	hen::Core::getRenderCore().deleteRenderer(m_renderer);
+	m_gui.close();
 }
 
 void vox::editor::Editor::onProcess(float dt)
@@ -22,7 +24,7 @@ void vox::editor::Editor::onProcess(float dt)
 	m_cursor.process();
 	if (m_cursor.hasValidPosition())
 	{
-		hen::script::ScriptHelper helper{ m_gui.getResources().getScript() };
+		const hen::script::ScriptHelper helper{ m_gui.getScript() };
 
 		auto& mouse = hen::Core::getMouse();
 		if (mouse.isReleased(MOUSE_LEFT))
@@ -49,13 +51,13 @@ void vox::editor::Editor::onRender(float dt) const
 void vox::editor::Editor::load(const std::string& guiPath)
 {
 	initScriptData();
-	m_gui.onLoad(guiPath);
+	m_gui.load(guiPath);
 	grabScriptData();
 }
 
 void vox::editor::Editor::initScriptData()
 {
-	hen::script::ScriptHelper helper{ m_gui.getResources().getScript() };
+	hen::script::ScriptHelper helper{ m_gui.getScript() };
 
 	helper.addGlobalVariable(this, "Editor");
 
@@ -105,7 +107,7 @@ void vox::editor::Editor::initScriptData()
 }
 void vox::editor::Editor::grabScriptData()
 {
-	hen::script::ScriptHelper helper{ m_gui.getResources().getScript() };
+	const hen::script::ScriptHelper helper{ m_gui.getScript() };
 	
 	m_inputLeftClick = helper.getFunction<void, shape::Shape*>("inputLeftClick");
 	m_inputRightClick = helper.getFunction<void, shape::Shape*>("inputRightClick");
