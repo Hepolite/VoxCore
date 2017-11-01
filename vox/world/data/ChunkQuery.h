@@ -13,19 +13,18 @@ namespace vox
 	{
 		const unsigned int MAX_BYTES_PER_QUERY = 512 * 1024 * 1024;
 
-		template<typename T> using ChunkQuery = std::pair<T, glm::ivec3>;
-		template<typename T> using ChunkQueryList = std::vector<ChunkQuery<T>>;
-
-		template<typename T>
-		class ChunkBaseQuery
+		class ChunkQuery
 		{
-		public:
-			ChunkBaseQuery() = default;
-			ChunkBaseQuery(const ChunkBaseQuery&) = delete;
-			ChunkBaseQuery(ChunkBaseQuery&&) = default;
+			using Query = std::pair<BlockQuery, glm::ivec3>;
+			using QueryList = std::vector<Query>;
 
-			ChunkBaseQuery& operator=(const ChunkBaseQuery&) = delete;
-			ChunkBaseQuery& operator=(ChunkBaseQuery&&) = default;
+		public:
+			ChunkQuery() = default;
+			ChunkQuery(const ChunkQuery&) = delete;
+			ChunkQuery(ChunkQuery&&) = default;
+
+			ChunkQuery& operator=(const ChunkQuery&) = delete;
+			ChunkQuery& operator=(ChunkQuery&&) = default;
 
 			inline unsigned int memusage() const { return m_memusage; }
 			inline unsigned int size() const { return m_nodes.size(); }
@@ -34,7 +33,7 @@ namespace vox
 			inline auto begin() { return m_nodes.begin(); }
 			inline auto end() { return m_nodes.end(); }
 
-			inline bool add(T&& query, const glm::ivec3& cpos)
+			inline bool add(BlockQuery&& query, const glm::ivec3& cpos)
 			{
 				if (m_memusage + query.memusage() > MAX_BYTES_PER_QUERY)
 					return false;
@@ -45,11 +44,8 @@ namespace vox
 			}
 
 		private:
-			ChunkQueryList<T> m_nodes;
+			QueryList m_nodes;
 			unsigned int m_memusage = 0;
 		};
-
-		using ChunkReadQuery = ChunkBaseQuery<BlockReadQuery>;
-		using ChunkWriteQuery = ChunkBaseQuery<BlockWriteQuery>;
 	}
 }

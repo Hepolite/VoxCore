@@ -27,8 +27,8 @@ namespace vox
 			data::BlockData getBlock(const glm::ivec3& pos) const;
 			std::vector<glm::ivec3> getChunkCoordinates() const;
 
-			void acceptQuery(data::ChunkReadQuery& query) const;
-			void acceptQuery(data::ChunkWriteQuery& query);
+			void acceptReadQuery(data::ChunkQuery& query) const;
+			void acceptWriteQuery(data::ChunkQuery& query);
 
 			void injectChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE&& data);
 			bool exportChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE& data) const;

@@ -11,7 +11,7 @@
 #include "vox/editor/utility/Cursor.h"
 #include "vox/editor/utility/Grid.h"
 
-#include "hen/ui/gui/guis/GuiFile.h"
+#include "hen/ui/gui/guis/Gui.h"
 #include "hen/render/Camera.h"
 #include "hen/render/Renderer.h"
 
@@ -60,7 +60,7 @@ namespace vox
 			shape::ShapePoint m_shapePoint;
 			shape::Shape* m_shape = nullptr;
 
-			hen::gui::GuiFile m_gui;
+			hen::gui::Gui m_gui;
 			hen::render::Renderer m_renderer;
 		};
 	}

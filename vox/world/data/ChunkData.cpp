@@ -44,7 +44,7 @@ void vox::data::ChunkDataFlat::forget()
 	m_data.swap(BlockDataList{});
 }
 
-void vox::data::ChunkDataFlat::fillRegion(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
+void vox::data::ChunkDataFlat::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
 	const auto min = hen::math::max(glm::uvec3{}, dataOffset);
 	const auto max = hen::math::min(glm::uvec3{ static_cast<unsigned int>(chunk::SIZE) }, dataOffset + size);
@@ -55,12 +55,12 @@ void vox::data::ChunkDataFlat::fillRegion(BlockRegion& region, const glm::uvec3&
 	for (pos.z = min.z; pos.z < max.z; ++pos.z)
 		region.setBlock(getBlock(pos), glm::ivec3{ pos } + regionOffset);
 }
-void vox::data::ChunkDataFlat::acceptQuery(BlockReadQuery& query) const
+void vox::data::ChunkDataFlat::acceptReadQuery(BlockQuery& query) const
 {
 	for (auto& node : query)
 		node.first = getBlock(node.second) & query.bitmask();
 }
-void vox::data::ChunkDataFlat::acceptQuery(BlockWriteQuery& query)
+void vox::data::ChunkDataFlat::acceptWriteQuery(BlockQuery& query)
 {
 	expand();
 	for (auto& node : query)
@@ -114,7 +114,7 @@ void vox::data::ChunkDataRLE::forget()
 	m_data.swap(NodeList{});
 }
 
-void vox::data::ChunkDataRLE::fillRegion(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
+void vox::data::ChunkDataRLE::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
 	const glm::uvec3 ZERO{};
 	const glm::uvec3 SIZE{ static_cast<unsigned int>(chunk::SIZE) };
@@ -149,12 +149,12 @@ void vox::data::ChunkDataRLE::fillRegion(BlockRegion& region, const glm::uvec3& 
 			region.setBlock(getBlock(pos), glm::ivec3{ pos } + regionOffset);
 	}
 }
-void vox::data::ChunkDataRLE::acceptQuery(BlockReadQuery& query) const
+void vox::data::ChunkDataRLE::acceptReadQuery(BlockQuery& query) const
 {
 	for (auto& node : query)
 		node.first = getBlock(node.second) & query.bitmask();
 }
-void vox::data::ChunkDataRLE::acceptQuery(BlockWriteQuery& query)
+void vox::data::ChunkDataRLE::acceptWriteQuery(BlockQuery& query)
 {
 	throw std::exception("Not implemented");
 	// expand();

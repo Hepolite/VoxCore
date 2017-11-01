@@ -19,11 +19,11 @@ vox::data::BlockData vox::world::Chunk::getBlock(const glm::uvec3& pos) const
 {
 	return m_data->getBlock(pos);
 }
-void vox::world::Chunk::acceptQuery(data::BlockReadQuery& query) const
+void vox::world::Chunk::acceptReadQuery(data::BlockQuery& query) const
 {
-	m_data->acceptQuery(query);
+	m_data->acceptReadQuery(query);
 }
-void vox::world::Chunk::acceptQuery(data::BlockWriteQuery& query)
+void vox::world::Chunk::acceptWriteQuery(data::BlockQuery& query)
 {
 	data::ChunkDataTranslator translator;
 
@@ -36,7 +36,7 @@ void vox::world::Chunk::acceptQuery(data::BlockWriteQuery& query)
 		m_dataRLE.forget();
 	}
 
-	m_data->acceptQuery(query);
+	m_data->acceptWriteQuery(query);
 
 	m_data = &m_dataRLE;
 	m_dataRLE = translator.toRLE(m_dataFlat);
@@ -50,19 +50,19 @@ vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 
 	data::BlockRegion region{ glm::ivec3{ -1 }, glm::ivec3{ chunk::SIZE + 2 } };
 
-	m_data->fillRegion(region, glm::uvec3{}, glm::ivec3{}, glm::uvec3{ SIZE });
+	m_data->acceptRegionQuery(region, glm::uvec3{}, glm::ivec3{}, glm::uvec3{ SIZE });
 	if (const auto neightbor = getNeighbor(Side::NORTH))
-		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::SOUTH))
-		neightbor->m_data->fillRegion(region, glm::ivec3{ SIZE_MINUS_ONE, 0, 0 }, glm::ivec3{ -chunk::SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ SIZE_MINUS_ONE, 0, 0 }, glm::ivec3{ -chunk::SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::WEST))
-		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ 0, SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ 0, SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::EAST))
-		neightbor->m_data->fillRegion(region, glm::ivec3{ 0, SIZE_MINUS_ONE, 0 }, glm::ivec3{ 0, -chunk::SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ 0, SIZE_MINUS_ONE, 0 }, glm::ivec3{ 0, -chunk::SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::TOP))
-		neightbor->m_data->fillRegion(region, glm::ivec3{}, glm::ivec3{ 0, 0, SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ 0, 0, SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 	if (const auto neightbor = getNeighbor(Side::BOTTOM))
-		neightbor->m_data->fillRegion(region, glm::ivec3{ 0, 0, SIZE_MINUS_ONE }, glm::ivec3{ 0, 0, -chunk::SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
+		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ 0, 0, SIZE_MINUS_ONE }, glm::ivec3{ 0, 0, -chunk::SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 
 	return region;
 }

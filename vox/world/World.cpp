@@ -55,18 +55,18 @@ std::vector<glm::ivec3> vox::world::World::getChunkCoordinates() const
 	return chunks;
 }
 
-void vox::world::World::acceptQuery(data::ChunkReadQuery& query) const
+void vox::world::World::acceptReadQuery(data::ChunkQuery& query) const
 {
 	for (auto& chunkQuery : query)
 	{
 		if (const auto chunk = getChunk(chunkQuery.second))
-			chunk->acceptQuery(chunkQuery.first);
+			chunk->acceptReadQuery(chunkQuery.first);
 	}
 }
-void vox::world::World::acceptQuery(data::ChunkWriteQuery& query)
+void vox::world::World::acceptWriteQuery(data::ChunkQuery& query)
 {
 	for (auto& chunkQuery : query)
-		getOrCreateChunk(chunkQuery.second).acceptQuery(chunkQuery.first);
+		getOrCreateChunk(chunkQuery.second).acceptWriteQuery(chunkQuery.first);
 
 	for (auto& chunkQuery : query)
 	{

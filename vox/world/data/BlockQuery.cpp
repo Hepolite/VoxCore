@@ -5,11 +5,54 @@
 
 #include "hen/util/MathLib.h"
 
-unsigned int vox::data::BlockBaseQuery::getIndex(const glm::uvec3& pos) const
+unsigned int vox::data::BlockQuery::getIndex(const glm::uvec3& pos) const
 {
 	return (pos.x * chunk::SIZE + pos.y) * chunk::SIZE + pos.z;
 }
-void vox::data::BlockBaseQuery::limit(const glm::uvec3& lower, const glm::uvec3& upper)
+
+void vox::data::BlockQuery::add(const BlockData& data, const glm::uvec3& pos)
+{
+	limit(pos, pos);
+	set(data, pos);
+}
+void vox::data::BlockQuery::add(const BlockData& data, const glm::uvec3& start, const glm::uvec3& end)
+{
+	const auto min = hen::math::min(start, end);
+	const auto max = hen::math::max(start, end);
+
+	glm::uvec3 pos;
+	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
+	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
+	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
+		set(data, pos);
+}
+void vox::data::BlockQuery::set(const BlockData& data, const glm::uvec3& pos)
+{
+	const auto index = getIndex(pos);
+	if (empty() || m_nodes.back().second < index)
+		m_nodes.emplace_back(data, index);
+	else
+	{
+		const auto node = std::make_pair(data, index);
+		auto it = std::upper_bound(m_nodes.begin(), m_nodes.end(), node,
+			[](auto& lhs, auto& rhs) { return lhs.second <= rhs.second; }
+		);
+		m_nodes.insert(it, node);
+	}
+}
+bool vox::data::BlockQuery::get(vox::data::BlockData& data, const glm::uvec3& pos) const
+{
+	const auto node = std::make_pair(BlockData{}, getIndex(pos));
+	auto it = std::upper_bound(m_nodes.begin(), m_nodes.end(), node,
+		[](auto& lhs, auto& rhs) { return lhs.second <= rhs.second; }
+	);
+	if (it == m_nodes.end())
+		return false;
+	data = it->first;
+	return true;
+}
+
+void vox::data::BlockQuery::limit(const glm::uvec3& lower, const glm::uvec3& upper)
 {
 	if (empty())
 	{
@@ -23,31 +66,45 @@ void vox::data::BlockBaseQuery::limit(const glm::uvec3& lower, const glm::uvec3&
 	}
 }
 
+/*void vox::data::BlockReadQuery::insert(const glm::uvec3& pos)
+{
+	m_nodes.emplace_back(BlockData{}, getIndex(pos));
+}
 void vox::data::BlockReadQuery::add(const glm::uvec3& pos)
 {
-	m_nodes.emplace_back(0, getIndex(pos));
+	insert(pos);
 }
 void vox::data::BlockReadQuery::add(const glm::uvec3& start, const glm::uvec3& end)
 {
+	const auto min = hen::math::min(start, end);
+	const auto max = hen::math::max(start, end);
+
 	glm::uvec3 pos;
-	for (pos.x = start.x; pos.x <= end.x; ++pos.x)
-	for (pos.y = start.y; pos.y <= end.y; ++pos.y)
-	for (pos.z = start.z; pos.z <= end.z; ++pos.z)
-		m_nodes.emplace_back(0, getIndex(pos));
+	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
+	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
+	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
+		insert(pos);
 }
 
+void vox::data::BlockWriteQuery::insert(const BlockData& data, const glm::uvec3& pos)
+{
+	m_nodes.emplace_back(data, getIndex(pos));
+}
 void vox::data::BlockWriteQuery::add(const BlockData& data, const glm::uvec3& pos)
 {
 	limit(pos, pos);
-	m_nodes.emplace_back(data, getIndex(pos));
+	insert(data, pos);
 }
 void vox::data::BlockWriteQuery::add(const BlockData& data, const glm::uvec3& start, const glm::uvec3& end)
 {
-	limit(hen::math::min(start, end), hen::math::max(start, end));
+	const auto min = hen::math::min(start, end);
+	const auto max = hen::math::max(start, end);
+	limit(min, max);
 
 	glm::uvec3 pos;
-	for (pos.x = start.x; pos.x <= end.x; ++pos.x)
-	for (pos.y = start.y; pos.y <= end.y; ++pos.y)
-	for (pos.z = start.z; pos.z <= end.z; ++pos.z)
-		m_nodes.emplace_back(data, getIndex(pos));
+	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
+	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
+	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
+		insert(data, pos);
 }
+*/

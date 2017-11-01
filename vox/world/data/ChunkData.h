@@ -15,9 +15,9 @@ namespace vox
 			virtual ~ChunkData() = default;
 
 			virtual BlockData getBlock(const glm::uvec3& pos) const = 0;
-			virtual void fillRegion(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const = 0;
-			virtual void acceptQuery(BlockReadQuery& query) const = 0;
-			virtual void acceptQuery(BlockWriteQuery& query) = 0;
+			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const = 0;
+			virtual void acceptReadQuery(BlockQuery& query) const = 0;
+			virtual void acceptWriteQuery(BlockQuery& query) = 0;
 
 			virtual unsigned int memusage() const = 0;
 			virtual bool empty() const = 0;
@@ -32,9 +32,9 @@ namespace vox
 
 		public:
 			virtual BlockData getBlock(const glm::uvec3& pos) const override final;
-			virtual void fillRegion(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
-			virtual void acceptQuery(BlockReadQuery& query) const override final;
-			virtual void acceptQuery(BlockWriteQuery& query) override final;
+			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
+			virtual void acceptReadQuery(BlockQuery& query) const override final;
+			virtual void acceptWriteQuery(BlockQuery& query) override final;
 
 			virtual unsigned int memusage() const override final;
 			virtual bool empty() const override final;
@@ -57,9 +57,9 @@ namespace vox
 
 		public:
 			virtual BlockData getBlock(const glm::uvec3& pos) const override final;
-			virtual void fillRegion(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
-			virtual void acceptQuery(BlockReadQuery& query) const override final;
-			virtual void acceptQuery(BlockWriteQuery& query) override final;
+			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
+			virtual void acceptReadQuery(BlockQuery& query) const override final;
+			virtual void acceptWriteQuery(BlockQuery& query) override final;
 
 			virtual unsigned int memusage() const override final;
 			virtual bool empty() const override final;

@@ -12,19 +12,20 @@
 namespace
 {
 	using namespace vox;
+	using namespace vox::data;
 
 	void addBlock(hen::script::ScriptHelper& helper)
 	{
-		helper.addType<data::BlockData>("BlockData");
-		helper.addConstructor<data::BlockData(unsigned int)>("BlockData");
-		helper.addConstructor<data::BlockData(unsigned int, glm::ivec4)>("BlockData");
+		helper.addType<BlockData>("BlockData");
+		helper.addConstructor<BlockData(unsigned int)>("BlockData");
+		helper.addConstructor<BlockData(unsigned int, glm::ivec4)>("BlockData");
 
-		helper.addFunction(&data::BlockData::getData, "getData");
-		helper.addFunction(&data::BlockData::getId, "getId");
-		helper.addFunction(&data::BlockData::getLight, "getLight");
-		helper.addFunction(&data::BlockData::setData, "setData");
-		helper.addFunction(&data::BlockData::setId, "setId");
-		helper.addFunction(&data::BlockData::setLight, "setLight");
+		helper.addFunction(&BlockData::getData, "getData");
+		helper.addFunction(&BlockData::getId, "getId");
+		helper.addFunction(&BlockData::getLight, "getLight");
+		helper.addFunction(&BlockData::setData, "setData");
+		helper.addFunction(&BlockData::setId, "setId");
+		helper.addFunction(&BlockData::setLight, "setLight");
 	}
 	void addBlockRegistry(hen::script::ScriptHelper& helper)
 	{
@@ -34,26 +35,28 @@ namespace
 	}
 	void addBlockQuery(hen::script::ScriptHelper& helper)
 	{
-		helper.addType<data::ChunkReadQuery>("ChunkReadQuery");
-		helper.addType<data::ChunkWriteQuery>("ChunkWriteQuery");
-		helper.addConstructor<data::ChunkReadQuery()>("ChunkReadQuery");
-		helper.addConstructor<data::ChunkWriteQuery()>("ChunkWriteQuery");
-		helper.addFunction<data::ChunkReadQuery&, data::ChunkReadQuery, data::ChunkReadQuery&&>(&data::ChunkReadQuery::operator=, "=");
-		helper.addFunction<data::ChunkWriteQuery&, data::ChunkWriteQuery, data::ChunkWriteQuery&&>(&data::ChunkWriteQuery::operator=, "=");
+		helper.addType<ChunkQuery>("ChunkQuery");
+		helper.addConstructor<ChunkQuery()>("ChunkQuery");
+		helper.addFunction<ChunkQuery&, ChunkQuery, ChunkQuery&&>(&ChunkQuery::operator=, "=");
 
-		helper.addFunction(data::BlockQueryHelper::readBlock, "queryReadBlock");
-		helper.addFunction(data::BlockQueryHelper::writeBlock, "queryWriteBlock");
-		helper.addFunction(data::BlockQueryHelper::writeCylinder, "queryWriteCylinder");
-		helper.addFunction(data::BlockQueryHelper::writeEllipse, "queryWriteEllipse");
-		helper.addFunction(data::BlockQueryHelper::writeLine, "queryWriteLine");
-		helper.addFunction(data::BlockQueryHelper::writeRectangle, "queryWriteRectangle");
-		helper.addFunction(data::BlockQueryHelper::writeSphere, "queryWriteSphere");
+		helper.addFunction(BlockQueryHelper::readBlock, "queryReadBlock");
+		helper.addFunction(BlockQueryHelper::writeBlock, "queryWriteBlock");
+		helper.addFunction(BlockQueryHelper::readCylinder, "queryReadCylinder");
+		helper.addFunction(BlockQueryHelper::writeCylinder, "queryWriteCylinder");
+		helper.addFunction(BlockQueryHelper::readEllipse, "queryReadEllipse");
+		helper.addFunction(BlockQueryHelper::writeEllipse, "queryWriteEllipse");
+		helper.addFunction(BlockQueryHelper::readLine, "queryReadLine");
+		helper.addFunction(BlockQueryHelper::writeLine, "queryWriteLine");
+		helper.addFunction(BlockQueryHelper::readRectangle, "queryReadRectangle");
+		helper.addFunction(BlockQueryHelper::writeRectangle, "queryWriteRectangle");
+		helper.addFunction(BlockQueryHelper::readSphere, "queryReadSphere");
+		helper.addFunction(BlockQueryHelper::writeSphere, "queryWriteSphere");
 	}
 	void addWorld(hen::script::ScriptHelper& helper)
 	{
 		helper.addFunction(&world::World::getBlock, "getBlock");
-		helper.addFunction<void, world::World, data::ChunkReadQuery&>(&world::World::acceptQuery, "acceptQuery");
-		helper.addFunction<void, world::World, data::ChunkWriteQuery&>(&world::World::acceptQuery, "acceptQuery");
+		helper.addFunction(&world::World::acceptReadQuery, "acceptReadQuery");
+		helper.addFunction(&world::World::acceptWriteQuery, "acceptWriteQuery");
 
 		helper.addFunction(&world::World::debugMemusage, "debugWorldMemory");
 	}

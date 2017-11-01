@@ -19,8 +19,8 @@ namespace vox
 			inline Chunk* getNeighbor(const Side& side) const { return m_neighbors[side.id]; }
 
 			data::BlockData getBlock(const glm::uvec3& pos) const;
-			void acceptQuery(data::BlockReadQuery& query) const;
-			void acceptQuery(data::BlockWriteQuery& query);
+			void acceptReadQuery(data::BlockQuery& query) const;
+			void acceptWriteQuery(data::BlockQuery& query);
 
 			data::BlockRegion getMeshingData() const;
 			data::ChunkDataRLE getStoringData() const;
