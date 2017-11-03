@@ -35,15 +35,9 @@ namespace vox
 			inline auto end() { return m_nodes.end(); }
 			inline auto iter() { return ChunkQueryIterator{ begin(), end() }; }
 
-			inline bool add(BlockQuery&& query, const glm::ivec3& cpos)
-			{
-				if (m_memusage + query.memusage() > MAX_BYTES_PER_QUERY)
-					return false;
-				m_memusage += query.memusage();
-				if (!query.empty())
-					m_nodes[cpos] = std::move(query);
-				return true;
-			}
+			bool add(BlockQuery&& query, const glm::ivec3& cpos);
+			void add(const BlockData& data, const glm::ivec3& pos);
+			bool get(BlockData& data, const glm::ivec3& pos) const;
 
 		private:
 			QueryMap m_nodes;

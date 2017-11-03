@@ -17,8 +17,11 @@ namespace
 	void addBlock(hen::script::ScriptHelper& helper)
 	{
 		helper.addType<BlockData>("BlockData");
+		helper.addConstructor<BlockData()>("BlockData");
 		helper.addConstructor<BlockData(unsigned int)>("BlockData");
 		helper.addConstructor<BlockData(unsigned int, glm::ivec4)>("BlockData");
+		helper.addFunction(&BlockData::operator==, "==");
+		helper.addFunction(&BlockData::operator!=, "!=");
 
 		helper.addFunction(&BlockData::getData, "getData");
 		helper.addFunction(&BlockData::getId, "getId");
@@ -38,6 +41,8 @@ namespace
 		helper.addType<ChunkQuery>("ChunkQuery");
 		helper.addConstructor<ChunkQuery()>("ChunkQuery");
 		helper.addFunction<ChunkQuery&, ChunkQuery, ChunkQuery&&>(&ChunkQuery::operator=, "=");
+		helper.addFunction<void, ChunkQuery, const BlockData&, const glm::ivec3&>(&ChunkQuery::add, "add");
+		helper.addFunction(&ChunkQuery::get, "get");
 		helper.addFunction(&ChunkQuery::iter, "iter");
 
 		helper.addFunction(&ChunkQueryIterator::isValid, "isValid");
