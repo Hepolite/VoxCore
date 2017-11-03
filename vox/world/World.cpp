@@ -59,19 +59,19 @@ void vox::world::World::acceptReadQuery(data::ChunkQuery& query) const
 {
 	for (auto& chunkQuery : query)
 	{
-		if (const auto chunk = getChunk(chunkQuery.second))
-			chunk->acceptReadQuery(chunkQuery.first);
+		if (const auto chunk = getChunk(chunkQuery.first))
+			chunk->acceptReadQuery(chunkQuery.second);
 	}
 }
 void vox::world::World::acceptWriteQuery(data::ChunkQuery& query)
 {
 	for (auto& chunkQuery : query)
-		getOrCreateChunk(chunkQuery.second).acceptWriteQuery(chunkQuery.first);
+		getOrCreateChunk(chunkQuery.first).acceptWriteQuery(chunkQuery.second);
 
 	for (auto& chunkQuery : query)
 	{
-		const auto cpos = chunkQuery.second;
-		auto& blockQuery = chunkQuery.first;
+		const auto cpos = chunkQuery.first;
+		auto& blockQuery = chunkQuery.second;
 		if (const auto chunk = getChunk(cpos))
 		{
 			if (chunk->empty())

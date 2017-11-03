@@ -34,7 +34,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::readSphere(const glm::ivec3& 
 vox::data::ChunkQuery vox::data::BlockQueryHelper::writeBlock(const BlockData& data, const glm::ivec3& pos)
 {
 	ChunkQuery chunkQuery;
-	BlockQuery blockQuery{ true, false, false };
+	BlockQuery blockQuery;
 	blockQuery.add(data, pos & chunk::SIZE_MINUS_ONE);
 	chunkQuery.add(std::move(blockQuery), pos >> chunk::SIZE_LG);
 	return chunkQuery;
@@ -59,7 +59,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeCylinder(const BlockData
 	for (cpos.y = cstart.y; cpos.y <= cend.y; ++cpos.y)
 	for (cpos.z = cstart.z; cpos.z <= cend.z; ++cpos.z)
 	{
-		BlockQuery blockQuery{ true, false, false };
+		BlockQuery blockQuery;
 
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
@@ -99,7 +99,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeEllipse(const BlockData&
 	for (cpos.y = cstart.y; cpos.y <= cend.y; ++cpos.y)
 	for (cpos.z = cstart.z; cpos.z <= cend.z; ++cpos.z)
 	{
-		BlockQuery blockQuery{ true, false, false };
+		BlockQuery blockQuery;
 
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
@@ -129,7 +129,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeLine(const BlockData& da
 	world::RayBresenham line{ nullptr, start, end };
 
 	glm::ivec3 pos = start >> chunk::SIZE_LG;
-	BlockQuery blockQuery{ true, false, false };
+	BlockQuery blockQuery;
 	while (line.isValid())
 	{
 		const glm::ivec3 cpos = line.nextBlockPosition() >> chunk::SIZE_LG;
@@ -139,7 +139,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeLine(const BlockData& da
 		if (cpos != pos)
 		{
 			chunkQuery.add(std::move(blockQuery), pos);
-			blockQuery = BlockQuery{ true, false, false };
+			blockQuery = BlockQuery{};
 			pos = cpos;
 		}
 	}
@@ -164,7 +164,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeRectangle(const BlockDat
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
 
-		BlockQuery blockQuery{ true, false, false };
+		BlockQuery blockQuery;
 		blockQuery.add(data, lowest, highest);
 		if (!chunkQuery.add(std::move(blockQuery), cpos))
 			return chunkQuery;

@@ -5,7 +5,7 @@
 
 #include "hen/util/MathLib.h"
 
-unsigned int vox::data::BlockQuery::getIndex(const glm::uvec3& pos) const
+unsigned short vox::data::BlockQuery::getIndex(const glm::uvec3& pos) const
 {
 	return (pos.x * chunk::SIZE + pos.y) * chunk::SIZE + pos.z;
 }
@@ -65,46 +65,3 @@ void vox::data::BlockQuery::limit(const glm::uvec3& lower, const glm::uvec3& upp
 		m_max = hen::math::min(m_max, upper);
 	}
 }
-
-/*void vox::data::BlockReadQuery::insert(const glm::uvec3& pos)
-{
-	m_nodes.emplace_back(BlockData{}, getIndex(pos));
-}
-void vox::data::BlockReadQuery::add(const glm::uvec3& pos)
-{
-	insert(pos);
-}
-void vox::data::BlockReadQuery::add(const glm::uvec3& start, const glm::uvec3& end)
-{
-	const auto min = hen::math::min(start, end);
-	const auto max = hen::math::max(start, end);
-
-	glm::uvec3 pos;
-	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
-	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
-	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
-		insert(pos);
-}
-
-void vox::data::BlockWriteQuery::insert(const BlockData& data, const glm::uvec3& pos)
-{
-	m_nodes.emplace_back(data, getIndex(pos));
-}
-void vox::data::BlockWriteQuery::add(const BlockData& data, const glm::uvec3& pos)
-{
-	limit(pos, pos);
-	insert(data, pos);
-}
-void vox::data::BlockWriteQuery::add(const BlockData& data, const glm::uvec3& start, const glm::uvec3& end)
-{
-	const auto min = hen::math::min(start, end);
-	const auto max = hen::math::max(start, end);
-	limit(min, max);
-
-	glm::uvec3 pos;
-	for (pos.x = min.x; pos.x <= max.x; ++pos.x)
-	for (pos.y = min.y; pos.y <= max.y; ++pos.y)
-	for (pos.z = min.z; pos.z <= max.z; ++pos.z)
-		insert(data, pos);
-}
-*/

@@ -2,10 +2,12 @@
 #pragma once
 
 #include "vox/world/data/BlockQuery.h"
+#include "vox/world/data/ChunkQueryIterator.h"
 
 #include <glm/vec3.hpp>
+#include <glm/gtx/hash.hpp>
 
-#include <vector>
+#include <unordered_map>
 
 namespace vox
 {
@@ -15,8 +17,7 @@ namespace vox
 
 		class ChunkQuery
 		{
-			using Query = std::pair<BlockQuery, glm::ivec3>;
-			using QueryList = std::vector<Query>;
+			using QueryMap = std::unordered_map<glm::ivec3, BlockQuery>;
 
 		public:
 			ChunkQuery() = default;
@@ -32,6 +33,7 @@ namespace vox
 
 			inline auto begin() { return m_nodes.begin(); }
 			inline auto end() { return m_nodes.end(); }
+			inline auto iter() { return ChunkQueryIterator{ begin(), end() }; }
 
 			inline bool add(BlockQuery&& query, const glm::ivec3& cpos)
 			{
@@ -39,12 +41,12 @@ namespace vox
 					return false;
 				m_memusage += query.memusage();
 				if (!query.empty())
-					m_nodes.emplace_back(std::move(query), cpos);
+					m_nodes[cpos] = std::move(query);
 				return true;
 			}
 
 		private:
-			QueryList m_nodes;
+			QueryMap m_nodes;
 			unsigned int m_memusage = 0;
 		};
 	}

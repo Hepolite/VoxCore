@@ -13,7 +13,7 @@ namespace vox
 	{
 		class BlockQuery
 		{
-			using Query = std::pair<BlockData, unsigned int>;
+			using Query = std::pair<BlockData, unsigned short>;
 			using QueryList = std::vector<Query>;
 
 		public:
@@ -28,7 +28,7 @@ namespace vox
 			BlockQuery& operator=(const BlockQuery&) = delete;
 			BlockQuery& operator=(BlockQuery&&) = default;
 
-			inline unsigned int memusage() const { return size() * sizeof(BlockQuery); }
+			inline unsigned int memusage() const { return size() * sizeof(Query); }
 			inline unsigned int size() const { return m_nodes.size(); }
 			inline bool empty() const { return m_nodes.empty(); }
 
@@ -46,7 +46,7 @@ namespace vox
 			inline glm::uvec3 max() const { return m_max; }
 
 		private:
-			unsigned int getIndex(const glm::uvec3& pos) const;
+			unsigned short getIndex(const glm::uvec3& pos) const;
 			void limit(const glm::uvec3& lower, const glm::uvec3& upper);
 			void set(const BlockData& data, const glm::uvec3& pos);
 

@@ -38,6 +38,12 @@ namespace
 		helper.addType<ChunkQuery>("ChunkQuery");
 		helper.addConstructor<ChunkQuery()>("ChunkQuery");
 		helper.addFunction<ChunkQuery&, ChunkQuery, ChunkQuery&&>(&ChunkQuery::operator=, "=");
+		helper.addFunction(&ChunkQuery::iter, "iter");
+
+		helper.addFunction(&ChunkQueryIterator::isValid, "isValid");
+		helper.addFunction(&ChunkQueryIterator::next, "next");
+		helper.addFunction(&ChunkQueryIterator::getPos, "getPos");
+		helper.addFunction(&ChunkQueryIterator::getData, "getData");
 
 		helper.addFunction(BlockQueryHelper::readBlock, "queryReadBlock");
 		helper.addFunction(BlockQueryHelper::writeBlock, "queryWriteBlock");
