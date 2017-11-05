@@ -22,7 +22,7 @@ namespace vox
 
 		public:
 			ChunkQueryIterator() = delete;
-			ChunkQueryIterator(const QueryMap::iterator& begin, const QueryMap::iterator& end);
+			ChunkQueryIterator(const QueryMap::const_iterator& begin, const QueryMap::const_iterator& end);
 
 			bool isValid() const;
 			void next();
@@ -31,9 +31,9 @@ namespace vox
 			glm::ivec3 getPos() const;
 
 		private:
-			QueryList::iterator m_currentBlock;
-			QueryMap::iterator m_currentChunk;
-			QueryMap::iterator m_end;
+			QueryList::const_iterator m_currentBlock;
+			QueryMap::const_iterator m_currentChunk;
+			QueryMap::const_iterator m_end;
 		};
 	}
 }

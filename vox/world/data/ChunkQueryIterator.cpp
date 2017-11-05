@@ -15,7 +15,7 @@ namespace
 	}
 }
 
-vox::data::ChunkQueryIterator::ChunkQueryIterator(const QueryMap::iterator& begin, const QueryMap::iterator& end)
+vox::data::ChunkQueryIterator::ChunkQueryIterator(const QueryMap::const_iterator& begin, const QueryMap::const_iterator& end)
 	: m_currentChunk(begin), m_end(end)
 {
 	if (isValid())

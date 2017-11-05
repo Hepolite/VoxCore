@@ -32,12 +32,15 @@ namespace vox
 			inline bool empty() const { return m_nodes.empty(); }
 
 			inline auto begin() { return m_nodes.begin(); }
+			inline auto begin() const { return m_nodes.begin(); }
 			inline auto end() { return m_nodes.end(); }
-			inline auto iter() { return ChunkQueryIterator{ begin(), end() }; }
+			inline auto end() const { return m_nodes.end(); }
+			inline auto iter() const { return ChunkQueryIterator{ begin(), end() }; }
 
 			bool add(BlockQuery&& query, const glm::ivec3& cpos);
 			void add(const BlockData& data, const glm::ivec3& pos);
-			bool get(BlockData& data, const glm::ivec3& pos) const;
+			bool has(const glm::ivec3& pos) const;
+			BlockData get(const glm::ivec3& pos) const;
 
 		private:
 			QueryMap m_nodes;

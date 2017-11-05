@@ -23,11 +23,13 @@ vox::world::Chunk* vox::world::World::getChunk(const glm::ivec3& cpos)
 vox::world::Chunk& vox::world::World::getOrCreateChunk(const glm::ivec3& cpos)
 {
 	const auto& data = m_chunks.emplace(std::piecewise_construct, std::make_tuple(cpos), std::make_tuple());
-	if (data.second)
-		hen::Core::getEventBus().post(events::ChunkCreate{ this, cpos });
 	auto& chunk = data.first->second;
-	for (const auto& side : Side::SIDES)
-		chunk.setNeighbor(getChunk(cpos + side.z), side);
+	if (data.second)
+	{
+		hen::Core::getEventBus().post(events::ChunkCreate{ this, cpos });
+		for (const auto& side : Side::SIDES)
+			chunk.setNeighbor(getChunk(cpos + side.z), side);
+	}
 	return chunk;
 }
 void vox::world::World::deleteChunk(const glm::ivec3& cpos)
@@ -45,7 +47,7 @@ vox::data::BlockData vox::world::World::getBlock(const glm::ivec3& pos) const
 {
 	if (const auto chunk = getChunk(pos >> chunk::SIZE_LG))
 		return chunk->getBlock(pos & chunk::SIZE_MINUS_ONE);
-	return 0;
+	return data::BlockData{};
 }
 std::vector<glm::ivec3> vox::world::World::getChunkCoordinates() const
 {

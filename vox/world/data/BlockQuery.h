@@ -34,12 +34,15 @@ namespace vox
 
 			inline BlockData front() const { return empty() ? BlockData{} : m_nodes.front().first; }
 			inline BlockData back() const { return empty() ? BlockData{} : m_nodes.back().first; }
-			inline QueryList::iterator begin() { return m_nodes.begin(); }
-			inline QueryList::iterator end() { return m_nodes.end(); }
+			inline auto begin() { return m_nodes.begin(); }
+			inline auto begin() const { return m_nodes.begin(); }
+			inline auto end() { return m_nodes.end(); }
+			inline auto end() const { return m_nodes.end(); }
 
 			void add(const BlockData& data, const glm::uvec3& pos);
 			void add(const BlockData& data, const glm::uvec3& start, const glm::uvec3& end);
-			bool get(BlockData& data, const glm::uvec3& pos) const;
+			bool has(const glm::uvec3& pos) const;
+			BlockData get(const glm::uvec3& pos) const;
 
 			inline unsigned int bitmask() const { return m_bitmask; }
 			inline glm::uvec3 min() const { return m_min; }
@@ -49,6 +52,8 @@ namespace vox
 			unsigned short getIndex(const glm::uvec3& pos) const;
 			void limit(const glm::uvec3& lower, const glm::uvec3& upper);
 			void set(const BlockData& data, const glm::uvec3& pos);
+			QueryList::iterator getLocation(const glm::uvec3& pos, const BlockData& data);
+			QueryList::const_iterator getLocation(const glm::uvec3& pos) const;
 
 			QueryList m_nodes;
 			unsigned int m_bitmask;

@@ -1,6 +1,7 @@
 
 #include "VoxScriptData.h"
 
+#include "vox/editor/tools/ToolWorldTerraform.h"
 #include "vox/VoxCore.h"
 #include "vox/world/BlockRegistry.h"
 #include "vox/world/data/BlockQueryHelper.h"
@@ -42,6 +43,7 @@ namespace
 		helper.addConstructor<ChunkQuery()>("ChunkQuery");
 		helper.addFunction<ChunkQuery&, ChunkQuery, ChunkQuery&&>(&ChunkQuery::operator=, "=");
 		helper.addFunction<void, ChunkQuery, const BlockData&, const glm::ivec3&>(&ChunkQuery::add, "add");
+		helper.addFunction(&ChunkQuery::has, "has");
 		helper.addFunction(&ChunkQuery::get, "get");
 		helper.addFunction(&ChunkQuery::iter, "iter");
 
@@ -78,6 +80,12 @@ namespace
 		helper.addFunction(&world::Universe::getRegistry, "getRegistry");
 		helper.addFunction(&world::Universe::getWorld, "getWorld");
 	}
+
+	void addToolTerraform(hen::script::ScriptHelper& helper)
+	{
+		helper.addFunction(tool::erode, "toolWorldErode");
+		helper.addFunction(tool::smooth, "toolWorldSmooth");
+	}
 }
 
 vox::script::VoxScriptData::VoxScriptData()
@@ -89,5 +97,7 @@ vox::script::VoxScriptData::VoxScriptData()
 		addBlockQuery(helper);
 		addWorld(helper);
 		addUniverse(helper);
+
+		addToolTerraform(helper);
 	});
 }
