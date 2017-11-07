@@ -61,6 +61,10 @@ void vox::editor::Editor::initScriptData()
 
 	helper.addGlobalVariable(this, "Editor");
 
+	helper.addGlobalVariable(&m_cameraHandler, "Camera");
+	helper.addFunction(&util::CameraHandler::getPosition, "getPosition");
+	helper.addFunction(&util::CameraHandler::getDirection, "getDirection");
+
 	helper.addGlobalVariable(&m_cursor, "Cursor");
 	helper.addFunction(&util::Cursor::lockAxisX, "lockAxisX");
 	helper.addFunction(&util::Cursor::lockAxisY, "lockAxisY");

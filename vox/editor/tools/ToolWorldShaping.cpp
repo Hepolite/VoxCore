@@ -1,11 +1,13 @@
 
-#include "vox/editor/tools/ToolWorldTerraform.h"
+#include "vox/editor/tools/ToolWorldShaping.h"
 
-void vox::tool::WorldFilterKernel::add(const glm::ivec3& pos, int weight)
+#include "hen/util/MathLib.h"
+
+void vox::tool::world::WorldFilterKernel::add(const glm::ivec3& pos, int weight)
 {
 	m_nodes.emplace_back(pos, weight);
 }
-void vox::tool::WorldFilterKernel::apply(const data::ChunkQuery& source, data::ChunkQuery& target, const glm::ivec3& pos) const
+void vox::tool::world::WorldFilterKernel::apply(const data::ChunkQuery& source, data::ChunkQuery& target, const glm::ivec3& pos) const
 {
 	std::unordered_map<unsigned int, int> frequencies;
 
@@ -29,25 +31,22 @@ void vox::tool::WorldFilterKernel::apply(const data::ChunkQuery& source, data::C
 			highestData.setId(id);
 		}
 	}
-	auto foo = highestData.getId();
-	target.add(highestData, pos);
+	if (currentId != highestData.getId())
+		target.add(highestData, pos);
 }
 
-vox::data::ChunkQuery vox::tool::generic(const data::ChunkQuery& query, const std::vector<WorldFilterKernel>& kernels)
+vox::data::ChunkQuery vox::tool::world::filter(const data::ChunkQuery& query, const WorldFilterKernel& kernel)
 {
 	data::ChunkQuery target;
 	auto it = query.iter();
 	while (it.isValid())
 	{
-		const auto pos = it.getPos();
-		for (const auto& kernel : kernels)
-			kernel.apply(query, target, pos);
+		kernel.apply(query, target, it.getPos());
 		it.next();
 	}
 	return target;
 }
-
-vox::data::ChunkQuery vox::tool::erode(const data::ChunkQuery& query)
+vox::data::ChunkQuery vox::tool::world::erode(const data::ChunkQuery& query)
 {
 	static const glm::ivec3 center{ 0, 0, 0 };
 	static const std::vector<glm::ivec3> edges{
@@ -74,20 +73,16 @@ vox::data::ChunkQuery vox::tool::erode(const data::ChunkQuery& query)
 	};
 	
 	WorldFilterKernel kernel;
-	if (std::rand() % 3 != 0)
-		kernel.add(center, std::rand() % 5);
+	kernel.add(center, -(std::rand() % 4));
 	for (const auto& edge : edges)
-	{
-		if (std::rand() % 4 != 0)
-			kernel.add(edge, std::rand() % 5 + 2);
-	}
+		kernel.add(edge, std::rand() % 5 + 2);
 	for (const auto& corner : corners)
 		kernel.add(corner, std::rand() % 5 + 2);
-	return generic(query, { kernel });
+	return filter(query, kernel);
 }
-vox::data::ChunkQuery vox::tool::smooth(const data::ChunkQuery& query)
+vox::data::ChunkQuery vox::tool::world::smooth(const data::ChunkQuery& query)
 {
-	static const WorldFilterKernel::NodeList nodes{
+	static const WorldFilterKernel kernel{ {
 		{ glm::ivec3(0, 0, 0), 2 },
 
 		{ glm::ivec3(-1, 0, 0), 3 },
@@ -109,9 +104,22 @@ vox::data::ChunkQuery vox::tool::smooth(const data::ChunkQuery& query)
 		{ glm::ivec3(1, 0, -1), 1 },
 		{ glm::ivec3(1, 0, 1), 1 },
 		{ glm::ivec3(1, 1, 0), 1 },
-	};
-	static const std::vector<WorldFilterKernel> kernels{
-		{ nodes },
-	};
-	return generic(query, kernels);
+	} };
+	return filter(query, kernel);
+}
+
+vox::data::ChunkQuery vox::tool::world::pull(const data::ChunkQuery& query, const glm::ivec3& direction)
+{
+	data::ChunkQuery target;
+	auto it = query.iter();
+	while (it.isValid())
+	{
+		const auto pos = it.getPos() + direction;
+		const auto data = it.getData();
+		it.next();
+
+		if (!query.has(pos) || query.get(pos).getId() != data.getId())
+			target.add(data, pos);
+	}
+	return target;
 }

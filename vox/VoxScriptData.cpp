@@ -1,7 +1,8 @@
 
 #include "VoxScriptData.h"
 
-#include "vox/editor/tools/ToolWorldTerraform.h"
+#include "vox/editor/tools/ToolWorldReplace.h"
+#include "vox/editor/tools/ToolWorldShaping.h"
 #include "vox/VoxCore.h"
 #include "vox/world/BlockRegistry.h"
 #include "vox/world/data/BlockQueryHelper.h"
@@ -81,10 +82,21 @@ namespace
 		helper.addFunction(&world::Universe::getWorld, "getWorld");
 	}
 
-	void addToolTerraform(hen::script::ScriptHelper& helper)
+	void addToolWorldReplace(hen::script::ScriptHelper& helper)
 	{
-		helper.addFunction(tool::erode, "toolWorldErode");
-		helper.addFunction(tool::smooth, "toolWorldSmooth");
+		helper.addFunction(tool::world::replace, "toolWorldReplace");
+	}
+	void addToolWorldShaping(hen::script::ScriptHelper& helper)
+	{
+		helper.addType<tool::world::WorldFilterKernel>("WorldFilterKernel");
+		helper.addConstructor<tool::world::WorldFilterKernel()>("WorldFilterKernel");
+		helper.addFunction(&tool::world::WorldFilterKernel::add, "add");
+
+		helper.addFunction(tool::world::erode, "toolWorldFilter");
+		helper.addFunction(tool::world::erode, "toolWorldErode");
+		helper.addFunction(tool::world::smooth, "toolWorldSmooth");
+
+		helper.addFunction(tool::world::pull, "toolWorldPull");
 	}
 }
 
@@ -98,6 +110,7 @@ vox::script::VoxScriptData::VoxScriptData()
 		addWorld(helper);
 		addUniverse(helper);
 
-		addToolTerraform(helper);
+		addToolWorldReplace(helper);
+		addToolWorldShaping(helper);
 	});
 }
