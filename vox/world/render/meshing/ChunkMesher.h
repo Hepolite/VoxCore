@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "vox/world/Chunk.h"
 #include "vox/world/render/ChunkRenderer.h"
 #include "vox/world/render/meshing/ChunkMeshTask.h"
 
@@ -9,7 +8,6 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
-#include <unordered_set>
 
 #include <glm/gtx/hash.hpp>
 #include <glm/vec3.hpp>
@@ -36,9 +34,6 @@ namespace vox
 				bool pollResult(ChunkMeshTask& task);
 
 			private:
-				void meshNaive(ChunkMeshTask& task) const;
-				void meshGreedy(ChunkMeshTask& task) const;
-
 				void doWork();
 				void clearWork();
 
