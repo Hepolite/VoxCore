@@ -12,6 +12,10 @@ unsigned int vox::data::ChunkData::getIndex(const glm::uvec3& pos) const
 
 
 
+void vox::data::ChunkDataFlat::setBlock(const glm::uvec3& pos, const BlockData& data)
+{
+	m_data[getIndex(pos)] = data;
+}
 vox::data::BlockData vox::data::ChunkDataFlat::getBlock(const glm::uvec3& pos) const
 {
 	return getBlock(getIndex(pos));
@@ -69,6 +73,10 @@ void vox::data::ChunkDataFlat::acceptWriteQuery(BlockQuery& query)
 
 
 
+void vox::data::ChunkDataRLE::setBlock(const glm::uvec3& pos, const BlockData& data)
+{
+	throw std::exception("Not implemented");
+}
 vox::data::BlockData vox::data::ChunkDataRLE::getBlock(const glm::uvec3& pos) const
 {
 	return getBlock(getIndex(pos));

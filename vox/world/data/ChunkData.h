@@ -14,6 +14,7 @@ namespace vox
 		public:
 			virtual ~ChunkData() = default;
 
+			virtual void setBlock(const glm::uvec3& pos, const BlockData& data) = 0;
 			virtual BlockData getBlock(const glm::uvec3& pos) const = 0;
 			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const = 0;
 			virtual void acceptReadQuery(BlockQuery& query) const = 0;
@@ -31,6 +32,7 @@ namespace vox
 			friend class ChunkDataTranslator;
 
 		public:
+			virtual void setBlock(const glm::uvec3& pos, const BlockData& data) override final;
 			virtual BlockData getBlock(const glm::uvec3& pos) const override final;
 			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
 			virtual void acceptReadQuery(BlockQuery& query) const override final;
@@ -56,6 +58,7 @@ namespace vox
 			using NodeList = std::vector<Node>;
 
 		public:
+			virtual void setBlock(const glm::uvec3& pos, const BlockData& data) override final;
 			virtual BlockData getBlock(const glm::uvec3& pos) const override final;
 			virtual void acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const override final;
 			virtual void acceptReadQuery(BlockQuery& query) const override final;

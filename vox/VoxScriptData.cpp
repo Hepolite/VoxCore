@@ -34,7 +34,10 @@ namespace
 	}
 	void addBlockRegistry(hen::script::ScriptHelper& helper)
 	{
-		helper.addFunction(&world::BlockRegistry::has, "has");
+		helper.addFunction<bool, world::BlockRegistry, const std::string&>(&world::BlockRegistry::has, "has");
+		helper.addFunction<bool, world::BlockRegistry, unsigned int>(&world::BlockRegistry::has, "has");
+		helper.addFunction<const world::Block&, world::BlockRegistry, const std::string&>(&world::BlockRegistry::getBlock, "getBlock");
+		helper.addFunction<const world::Block&, world::BlockRegistry, unsigned int>(&world::BlockRegistry::getBlock, "getBlock");
 		helper.addFunction(&world::BlockRegistry::getId, "getId");
 		helper.addFunction(&world::BlockRegistry::getName, "getName");
 	}
