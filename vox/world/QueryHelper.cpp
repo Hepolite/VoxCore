@@ -1,50 +1,62 @@
 
-#include "vox/world/data/BlockQueryHelper.h"
+#include "vox/world/QueryHelper.h"
 
 #include "vox/world/ChunkSize.h"
 #include "vox/world/util/RayBresenham.h"
 
 #include "hen/util/MathLib.h"
 
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readBlock(const glm::ivec3& pos)
+namespace
 {
-	return writeBlock(BlockData{}, pos);
-}
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readCylinder(const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
-{
-	return writeCylinder(BlockData{}, start, end, axis);
-}
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readEllipse(const glm::ivec3& start, const glm::ivec3& end)
-{
-	return writeEllipse(BlockData{}, start, end);
-}
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readLine(const glm::ivec3& start, const glm::ivec3& end)
-{
-	return writeLine(BlockData{}, start, end);
-}
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readRectangle(const glm::ivec3& start, const glm::ivec3& end)
-{
-	return writeRectangle(BlockData{}, start, end);
-}
-vox::data::ChunkQuery vox::data::BlockQueryHelper::readSphere(const glm::ivec3& center, int radius)
-{
-	return writeSphere(BlockData{}, center, radius);
+	vox::data::BlockData getData(const vox::world::Block& block)
+	{
+		return vox::data::BlockData{ block.getId(), block.getLightEmittance() };
+	}
 }
 
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeBlock(const BlockData& data, const glm::ivec3& pos)
+vox::data::ChunkQuery vox::world::QueryHelper::readBlock(const glm::ivec3& pos)
 {
-	ChunkQuery chunkQuery;
-	BlockQuery blockQuery;
+	return writeBlock({}, pos);
+}
+vox::data::ChunkQuery vox::world::QueryHelper::readCylinder(const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
+{
+	return writeCylinder({}, start, end, axis);
+}
+vox::data::ChunkQuery vox::world::QueryHelper::readEllipse(const glm::ivec3& start, const glm::ivec3& end)
+{
+	return writeEllipse({}, start, end);
+}
+vox::data::ChunkQuery vox::world::QueryHelper::readLine(const glm::ivec3& start, const glm::ivec3& end)
+{
+	return writeLine({}, start, end);
+}
+vox::data::ChunkQuery vox::world::QueryHelper::readRectangle(const glm::ivec3& start, const glm::ivec3& end)
+{
+	return writeRectangle({}, start, end);
+}
+vox::data::ChunkQuery vox::world::QueryHelper::readSphere(const glm::ivec3& center, int radius)
+{
+	return writeSphere({}, center, radius);
+}
+
+vox::data::ChunkQuery vox::world::QueryHelper::writeBlock(const world::Block& block, const glm::ivec3& pos)
+{
+	const auto data = getData(block);
+
+	data::ChunkQuery chunkQuery;
+	data::BlockQuery blockQuery;
 	blockQuery.add(data, pos & chunk::SIZE_MINUS_ONE);
 	chunkQuery.add(std::move(blockQuery), pos >> chunk::SIZE_LG);
 	return chunkQuery;
 }
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeCylinder(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
+vox::data::ChunkQuery vox::world::QueryHelper::writeCylinder(const world::Block& block, const glm::ivec3& start, const glm::ivec3& end, hen::math::Axis axis)
 {
+	const auto data = getData(block);
+
 	// TODO: This isn't 100% accurate, small cylinders are incorrect
 	// The accuracy is good enough for use, however
 
-	ChunkQuery chunkQuery;
+	data::ChunkQuery chunkQuery;
 
 	const glm::ivec3 min = hen::math::min(start, end);
 	const glm::ivec3 max = hen::math::max(start, end);
@@ -59,7 +71,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeCylinder(const BlockData
 	for (cpos.y = cstart.y; cpos.y <= cend.y; ++cpos.y)
 	for (cpos.z = cstart.z; cpos.z <= cend.z; ++cpos.z)
 	{
-		BlockQuery blockQuery;
+		data::BlockQuery blockQuery;
 
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
@@ -83,9 +95,11 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeCylinder(const BlockData
 
 	return chunkQuery;
 }
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeEllipse(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end)
+vox::data::ChunkQuery vox::world::QueryHelper::writeEllipse(const world::Block& block, const glm::ivec3& start, const glm::ivec3& end)
 {
-	ChunkQuery chunkQuery;
+	const auto data = getData(block);
+
+	data::ChunkQuery chunkQuery;
 
 	const glm::ivec3 min = hen::math::min(start, end);
 	const glm::ivec3 max = hen::math::max(start, end);
@@ -99,7 +113,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeEllipse(const BlockData&
 	for (cpos.y = cstart.y; cpos.y <= cend.y; ++cpos.y)
 	for (cpos.z = cstart.z; cpos.z <= cend.z; ++cpos.z)
 	{
-		BlockQuery blockQuery;
+		data::BlockQuery blockQuery;
 
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
@@ -123,13 +137,15 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeEllipse(const BlockData&
 
 	return chunkQuery;
 }
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeLine(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end)
+vox::data::ChunkQuery vox::world::QueryHelper::writeLine(const world::Block& block, const glm::ivec3& start, const glm::ivec3& end)
 {
-	ChunkQuery chunkQuery;
+	const auto data = getData(block);
+
+	data::ChunkQuery chunkQuery;
 	world::RayBresenham line{ nullptr, start, end };
 
 	glm::ivec3 pos = start >> chunk::SIZE_LG;
-	BlockQuery blockQuery;
+	data::BlockQuery blockQuery;
 	while (line.isValid())
 	{
 		const glm::ivec3 cpos = line.nextBlockPosition() >> chunk::SIZE_LG;
@@ -139,7 +155,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeLine(const BlockData& da
 		if (cpos != pos)
 		{
 			chunkQuery.add(std::move(blockQuery), pos);
-			blockQuery = BlockQuery{};
+			blockQuery = data::BlockQuery{};
 			pos = cpos;
 		}
 	}
@@ -147,9 +163,11 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeLine(const BlockData& da
 
 	return chunkQuery;
 }
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeRectangle(const BlockData& data, const glm::ivec3& start, const glm::ivec3& end)
+vox::data::ChunkQuery vox::world::QueryHelper::writeRectangle(const world::Block& block, const glm::ivec3& start, const glm::ivec3& end)
 {
-	ChunkQuery chunkQuery;
+	const auto data = getData(block);
+
+	data::ChunkQuery chunkQuery;
 
 	const glm::ivec3 min = hen::math::min(start, end);
 	const glm::ivec3 max = hen::math::max(start, end);
@@ -164,7 +182,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeRectangle(const BlockDat
 		const auto lowest = hen::math::max(min - cpos * chunk::SIZE, glm::ivec3{});
 		const auto highest = hen::math::min(max - cpos * chunk::SIZE, glm::ivec3{ chunk::SIZE_MINUS_ONE });
 
-		BlockQuery blockQuery;
+		data::BlockQuery blockQuery;
 		blockQuery.add(data, lowest, highest);
 		if (!chunkQuery.add(std::move(blockQuery), cpos))
 			return chunkQuery;
@@ -172,7 +190,7 @@ vox::data::ChunkQuery vox::data::BlockQueryHelper::writeRectangle(const BlockDat
 
 	return chunkQuery;
 }
-vox::data::ChunkQuery vox::data::BlockQueryHelper::writeSphere(const BlockData& data, const glm::ivec3& center, int radius)
+vox::data::ChunkQuery vox::world::QueryHelper::writeSphere(const world::Block& block, const glm::ivec3& center, int radius)
 {
-	return writeEllipse(data, center - radius, center + radius);
+	return writeEllipse(block, center - radius, center + radius);
 }

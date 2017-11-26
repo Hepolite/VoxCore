@@ -30,11 +30,12 @@ namespace vox
 			bool empty() const;
 
 		private:
+			void getMeshingData(data::BlockRegion& region, const glm::uvec3& position, const glm::uvec3& offset, const glm::uvec3& size) const;
+
 			Chunk* m_neighbors[Side::COUNT] = { nullptr };
 
 			data::ChunkDataFlat m_dataFlat;
 			data::ChunkDataRLE m_dataRLE;
-			data::ChunkData* m_data = nullptr;
 		};
 	}
 }

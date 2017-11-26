@@ -5,7 +5,7 @@
 #include "vox/editor/tools/ToolWorldShaping.h"
 #include "vox/VoxCore.h"
 #include "vox/world/BlockRegistry.h"
-#include "vox/world/data/BlockQueryHelper.h"
+#include "vox/world/QueryHelper.h"
 #include "vox/world/Universe.h"
 #include "vox/world/World.h"
 
@@ -15,6 +15,7 @@ namespace
 {
 	using namespace vox;
 	using namespace vox::data;
+	using namespace vox::world;
 
 	void addBlock(hen::script::ScriptHelper& helper)
 	{
@@ -34,12 +35,12 @@ namespace
 	}
 	void addBlockRegistry(hen::script::ScriptHelper& helper)
 	{
-		helper.addFunction<bool, world::BlockRegistry, const std::string&>(&world::BlockRegistry::has, "has");
-		helper.addFunction<bool, world::BlockRegistry, unsigned int>(&world::BlockRegistry::has, "has");
-		helper.addFunction<const world::Block&, world::BlockRegistry, const std::string&>(&world::BlockRegistry::getBlock, "getBlock");
-		helper.addFunction<const world::Block&, world::BlockRegistry, unsigned int>(&world::BlockRegistry::getBlock, "getBlock");
-		helper.addFunction(&world::BlockRegistry::getId, "getId");
-		helper.addFunction(&world::BlockRegistry::getName, "getName");
+		helper.addFunction<bool, BlockRegistry, const std::string&>(&BlockRegistry::has, "has");
+		helper.addFunction<bool, BlockRegistry, unsigned int>(&BlockRegistry::has, "has");
+		helper.addFunction<const Block&, world::BlockRegistry, const std::string&>(&BlockRegistry::getBlock, "getBlock");
+		helper.addFunction<const Block&, world::BlockRegistry, unsigned int>(&BlockRegistry::getBlock, "getBlock");
+		helper.addFunction(&BlockRegistry::getId, "getId");
+		helper.addFunction(&BlockRegistry::getName, "getName");
 	}
 	void addBlockQuery(hen::script::ScriptHelper& helper)
 	{
@@ -55,34 +56,34 @@ namespace
 		helper.addFunction(&ChunkQueryIterator::next, "next");
 		helper.addFunction(&ChunkQueryIterator::getPos, "getPos");
 		helper.addFunction(&ChunkQueryIterator::getData, "getData");
-
-		helper.addFunction(BlockQueryHelper::readBlock, "queryReadBlock");
-		helper.addFunction(BlockQueryHelper::writeBlock, "queryWriteBlock");
-		helper.addFunction(BlockQueryHelper::readCylinder, "queryReadCylinder");
-		helper.addFunction(BlockQueryHelper::writeCylinder, "queryWriteCylinder");
-		helper.addFunction(BlockQueryHelper::readEllipse, "queryReadEllipse");
-		helper.addFunction(BlockQueryHelper::writeEllipse, "queryWriteEllipse");
-		helper.addFunction(BlockQueryHelper::readLine, "queryReadLine");
-		helper.addFunction(BlockQueryHelper::writeLine, "queryWriteLine");
-		helper.addFunction(BlockQueryHelper::readRectangle, "queryReadRectangle");
-		helper.addFunction(BlockQueryHelper::writeRectangle, "queryWriteRectangle");
-		helper.addFunction(BlockQueryHelper::readSphere, "queryReadSphere");
-		helper.addFunction(BlockQueryHelper::writeSphere, "queryWriteSphere");
 	}
 	void addWorld(hen::script::ScriptHelper& helper)
 	{
-		helper.addFunction(&world::World::getBlock, "getBlock");
-		helper.addFunction(&world::World::acceptReadQuery, "acceptReadQuery");
-		helper.addFunction(&world::World::acceptWriteQuery, "acceptWriteQuery");
+		helper.addFunction(&World::getBlock, "getBlock");
+		helper.addFunction(&World::acceptReadQuery, "acceptReadQuery");
+		helper.addFunction(&World::acceptWriteQuery, "acceptWriteQuery");
 
-		helper.addFunction(&world::World::debugMemusage, "debugWorldMemory");
+		helper.addFunction(&World::debugMemusage, "debugWorldMemory");
 	}
 	void addUniverse(hen::script::ScriptHelper& helper)
 	{
 		helper.addGlobalVariable(&VoxCore::getUniverse(), "Universe");
 
-		helper.addFunction(&world::Universe::getRegistry, "getRegistry");
-		helper.addFunction(&world::Universe::getWorld, "getWorld");
+		helper.addFunction(&Universe::getRegistry, "getRegistry");
+		helper.addFunction(&Universe::getWorld, "getWorld");
+
+		helper.addFunction(QueryHelper::readBlock, "queryReadBlock");
+		helper.addFunction(QueryHelper::writeBlock, "queryWriteBlock");
+		helper.addFunction(QueryHelper::readCylinder, "queryReadCylinder");
+		helper.addFunction(QueryHelper::writeCylinder, "queryWriteCylinder");
+		helper.addFunction(QueryHelper::readEllipse, "queryReadEllipse");
+		helper.addFunction(QueryHelper::writeEllipse, "queryWriteEllipse");
+		helper.addFunction(QueryHelper::readLine, "queryReadLine");
+		helper.addFunction(QueryHelper::writeLine, "queryWriteLine");
+		helper.addFunction(QueryHelper::readRectangle, "queryReadRectangle");
+		helper.addFunction(QueryHelper::writeRectangle, "queryWriteRectangle");
+		helper.addFunction(QueryHelper::readSphere, "queryReadSphere");
+		helper.addFunction(QueryHelper::writeSphere, "queryWriteSphere");
 	}
 
 	void addToolWorldReplace(hen::script::ScriptHelper& helper)

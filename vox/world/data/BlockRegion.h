@@ -30,8 +30,6 @@ namespace vox
 			void setBlocks(const BlockData& block, const glm::ivec3& start, const glm::ivec3& end);
 
 		private:
-			unsigned int getIndex(const glm::ivec3& pos) const;
-
 			glm::ivec3 m_size;
 			glm::ivec3 m_offset;
 

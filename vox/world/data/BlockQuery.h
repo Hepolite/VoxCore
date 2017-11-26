@@ -11,16 +11,13 @@ namespace vox
 {
 	namespace data
 	{
+		using Query = std::pair<BlockData, unsigned short>;
+		using QueryList = std::vector<Query>;
+
 		class BlockQuery
 		{
-			using Query = std::pair<BlockData, unsigned short>;
-			using QueryList = std::vector<Query>;
-
 		public:
-			BlockQuery() : BlockQuery(true, true, true) {}
-			BlockQuery(bool useIds, bool useColors, bool useAlpha)
-				: m_bitmask((useIds * BlockData::BITMASK_ID) | (useColors * BlockData::BITMASK_COLOR) | (useAlpha * BlockData::BITMASK_ALPHA))
-			{}
+			BlockQuery() = default;
 			BlockQuery(const BlockQuery&) = delete;
 			BlockQuery(BlockQuery&&) = default;
 			virtual ~BlockQuery() = default;
@@ -44,19 +41,16 @@ namespace vox
 			bool has(const glm::uvec3& pos) const;
 			BlockData get(const glm::uvec3& pos) const;
 
-			inline unsigned int bitmask() const { return m_bitmask; }
 			inline glm::uvec3 min() const { return m_min; }
 			inline glm::uvec3 max() const { return m_max; }
 
 		private:
-			unsigned short getIndex(const glm::uvec3& pos) const;
 			void limit(const glm::uvec3& lower, const glm::uvec3& upper);
 			void set(const BlockData& data, const glm::uvec3& pos);
 			QueryList::iterator getLocation(const glm::uvec3& pos, const BlockData& data);
 			QueryList::const_iterator getLocation(const glm::uvec3& pos) const;
 
 			QueryList m_nodes;
-			unsigned int m_bitmask;
 			glm::uvec3 m_min;
 			glm::uvec3 m_max;
 		};

@@ -1,19 +1,7 @@
 
 #include "vox/world/data/ChunkQueryIterator.h"
 
-#include "vox/world/ChunkSize.h"
-
-namespace
-{
-	inline glm::ivec3 getPosition(unsigned short index)
-	{
-		return glm::ivec3{
-			index / (vox::chunk::SIZE * vox::chunk::SIZE),
-			(index / vox::chunk::SIZE) % vox::chunk::SIZE,
-			index % vox::chunk::SIZE
-		};
-	}
-}
+#include "vox/world/data/Indexing.h"
 
 vox::data::ChunkQueryIterator::ChunkQueryIterator(const QueryMap::const_iterator& begin, const QueryMap::const_iterator& end)
 	: m_currentChunk(begin), m_end(end)

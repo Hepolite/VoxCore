@@ -2,7 +2,6 @@
 #include "vox/world/Universe.h"
 
 #include "vox/events/World.h"
-#include "vox/world/data/BlockQueryHelper.h"
 
 #include "hen/core/Core.h"
 #include "hen/event/EventBus.h"

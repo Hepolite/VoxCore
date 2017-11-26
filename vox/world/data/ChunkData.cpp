@@ -1,52 +1,13 @@
 
 #include "vox/world/data/ChunkData.h"
 
-#include "vox/world/ChunkSize.h"
+#include "vox/VoxCore.h"
+#include "vox/world/BlockRegistry.h"
+#include "vox/world/data/Indexing.h"
+#include "vox/world/Universe.h"
 
 #include "hen/util/MathLib.h"
 
-unsigned int vox::data::ChunkData::getIndex(const glm::uvec3& pos) const
-{
-	return (pos.x * chunk::SIZE + pos.y) * chunk::SIZE + pos.z;
-}
-
-
-
-void vox::data::ChunkDataFlat::setBlock(const glm::uvec3& pos, const BlockData& data)
-{
-	m_data[getIndex(pos)] = data;
-}
-vox::data::BlockData vox::data::ChunkDataFlat::getBlock(const glm::uvec3& pos) const
-{
-	return getBlock(getIndex(pos));
-}
-vox::data::BlockData vox::data::ChunkDataFlat::getBlock(unsigned int index) const
-{
-	return index < m_data.size() ? m_data[index] : 0;
-}
-void vox::data::ChunkDataFlat::swapBlock(BlockData& data, unsigned int index)
-{
-	if (index < m_data.size())
-		std::swap(m_data[index], data);
-}
-
-unsigned int vox::data::ChunkDataFlat::memusage() const
-{
-	return m_data.size() * sizeof(BlockData);
-}
-bool vox::data::ChunkDataFlat::empty() const
-{
-	return m_data.empty();
-}
-void vox::data::ChunkDataFlat::expand()
-{
-	if (empty())
-		m_data.resize(chunk::VOLUME, BlockData{});
-}
-void vox::data::ChunkDataFlat::forget()
-{
-	m_data.swap(BlockDataList{});
-}
 
 void vox::data::ChunkDataFlat::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
@@ -57,70 +18,68 @@ void vox::data::ChunkDataFlat::acceptRegionQuery(BlockRegion& region, const glm:
 	for (pos.x = min.x; pos.x < max.x; ++pos.x)
 	for (pos.y = min.y; pos.y < max.y; ++pos.y)
 	for (pos.z = min.z; pos.z < max.z; ++pos.z)
-		region.setBlock(getBlock(pos), glm::ivec3{ pos } + regionOffset);
+		region.setBlock(getBlock(pos), glm::ivec3{ pos } +regionOffset);
 }
 void vox::data::ChunkDataFlat::acceptReadQuery(BlockQuery& query) const
 {
 	for (auto& node : query)
-		node.first = getBlock(node.second) & query.bitmask();
+		node.first = getBlock(node.second);
 }
 void vox::data::ChunkDataFlat::acceptWriteQuery(BlockQuery& query)
 {
 	expand();
-	for (auto& node : query)
-		swapBlock(node.first, node.second);
+	for (const auto node : query)
+		setBlock(node.second, node.first);
 }
-
-
-
-void vox::data::ChunkDataRLE::setBlock(const glm::uvec3& pos, const BlockData& data)
+void vox::data::ChunkDataFlat::setBlock(const glm::uvec3& pos, const BlockData& data)
 {
-	throw std::exception("Not implemented");
+	setBlock(getIndex(pos), data);
 }
-vox::data::BlockData vox::data::ChunkDataRLE::getBlock(const glm::uvec3& pos) const
+void vox::data::ChunkDataFlat::setBlock(unsigned int index, const BlockData& data)
+{
+	if (index < size())
+	{
+		if ((data.getData() & BlockData::BITMASK_LIGHT) != 0)
+			m_lightPropagationNodes.emplace(data, index);
+		else
+			m_lightRemovalNodes.emplace(m_data[index], index);
+
+		m_data[index] = data;
+	}
+}
+vox::data::BlockData vox::data::ChunkDataFlat::getBlock(const glm::uvec3& pos) const
 {
 	return getBlock(getIndex(pos));
 }
-vox::data::BlockData vox::data::ChunkDataRLE::getBlock(unsigned int index) const
+vox::data::BlockData vox::data::ChunkDataFlat::getBlock(unsigned int index) const
+{
+	return index < size() ? m_data[index] : data::BlockData{};
+}
+
+unsigned int vox::data::ChunkDataFlat::memusage() const
+{
+	return size() * sizeof(BlockData);
+}
+unsigned int vox::data::ChunkDataFlat::size() const
+{
+	return m_data.size();
+}
+bool vox::data::ChunkDataFlat::empty() const
+{
+	return m_data.empty();
+}
+
+void vox::data::ChunkDataFlat::expand()
 {
 	if (empty())
-		return BlockData{};
-
-	int lower = 0;
-	int upper = m_data.size() - 1;
-	int center = upper / 2;
-
-	while (lower < upper)
-	{
-		const auto endIndex = m_data[center].second;
-		if (endIndex < index)
-			lower = center + 1;
-		else if (endIndex > index)
-			upper = center;
-		else
-			return m_data[center].first;
-		center = (lower + upper) / 2;
-	}
-	return m_data[center].first;
+		m_data.resize(chunk::VOLUME, BlockData{});
+}
+void vox::data::ChunkDataFlat::forget()
+{
+	m_data.swap(BlockDataList{});
 }
 
-unsigned int vox::data::ChunkDataRLE::memusage() const
-{
-	return m_data.size() * sizeof(Node);
-}
-bool vox::data::ChunkDataRLE::empty() const
-{
-	return m_data.empty() || (m_data.size() == 1 && m_data.front().first.getId() == 0);
-}
-void vox::data::ChunkDataRLE::expand()
-{
-	if (empty())
-		m_data.emplace_back(BlockData{}, chunk::VOLUME);
-}
-void vox::data::ChunkDataRLE::forget()
-{
-	m_data.swap(NodeList{});
-}
+
 
 void vox::data::ChunkDataRLE::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
@@ -160,12 +119,49 @@ void vox::data::ChunkDataRLE::acceptRegionQuery(BlockRegion& region, const glm::
 void vox::data::ChunkDataRLE::acceptReadQuery(BlockQuery& query) const
 {
 	for (auto& node : query)
-		node.first = getBlock(node.second) & query.bitmask();
+		node.first = getBlock(node.second);
 }
-void vox::data::ChunkDataRLE::acceptWriteQuery(BlockQuery& query)
+vox::data::BlockData vox::data::ChunkDataRLE::getBlock(const glm::uvec3& pos) const
 {
-	throw std::exception("Not implemented");
-	// expand();
-	// Add blocks where they should be 
+	return getBlock(getIndex(pos));
+}
+vox::data::BlockData vox::data::ChunkDataRLE::getBlock(unsigned int index) const
+{
+	if (empty())
+		return BlockData{};
+
+	int lower = 0;
+	int upper = m_data.size() - 1;
+	int center = upper / 2;
+
+	while (lower < upper)
+	{
+		const auto endIndex = m_data[center].second;
+		if (endIndex < index)
+			lower = center + 1;
+		else if (endIndex > index)
+			upper = center;
+		else
+			return m_data[center].first;
+		center = (lower + upper) / 2;
+	}
+	return m_data[center].first;
 }
 
+unsigned int vox::data::ChunkDataRLE::memusage() const
+{
+	return m_data.size() * sizeof(Node);
+}
+unsigned int vox::data::ChunkDataRLE::size() const
+{
+	return m_data.size();
+}
+bool vox::data::ChunkDataRLE::empty() const
+{
+	return m_data.empty() || (m_data.size() == 1 && m_data.front().first.getData() == 0);
+}
+
+void vox::data::ChunkDataRLE::forget()
+{
+	m_data.swap(NodeList{});
+}

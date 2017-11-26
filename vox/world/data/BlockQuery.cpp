@@ -1,14 +1,9 @@
 
 #include "vox/world/data/BlockQuery.h"
 
-#include "vox/world/ChunkSize.h"
+#include "vox/world/data/Indexing.h"
 
 #include "hen/util/MathLib.h"
-
-unsigned short vox::data::BlockQuery::getIndex(const glm::uvec3& pos) const
-{
-	return (pos.x * chunk::SIZE + pos.y) * chunk::SIZE + pos.z;
-}
 
 void vox::data::BlockQuery::add(const BlockData& data, const glm::uvec3& pos)
 {
@@ -65,13 +60,13 @@ void vox::data::BlockQuery::limit(const glm::uvec3& lower, const glm::uvec3& upp
 	}
 }
 
-vox::data::BlockQuery::QueryList::iterator vox::data::BlockQuery::getLocation(const glm::uvec3& pos, const BlockData& data)
+vox::data::QueryList::iterator vox::data::BlockQuery::getLocation(const glm::uvec3& pos, const BlockData& data)
 {
 	return std::upper_bound(m_nodes.begin(), m_nodes.end(), std::make_pair(data, getIndex(pos)),
 		[](auto& lhs, auto& rhs) { return lhs.second <= rhs.second; }
 	);
 }
-vox::data::BlockQuery::QueryList::const_iterator vox::data::BlockQuery::getLocation(const glm::uvec3& pos) const
+vox::data::QueryList::const_iterator vox::data::BlockQuery::getLocation(const glm::uvec3& pos) const
 {
 	return std::upper_bound(m_nodes.begin(), m_nodes.end(), std::make_pair(BlockData{}, getIndex(pos)),
 		[](auto& lhs, auto& rhs) { return lhs.second <= rhs.second; }

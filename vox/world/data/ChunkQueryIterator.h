@@ -16,8 +16,6 @@ namespace vox
 	{
 		class ChunkQueryIterator
 		{
-			using Query = std::pair<BlockData, unsigned short>;
-			using QueryList = std::vector<Query>;
 			using QueryMap = std::unordered_map<glm::ivec3, BlockQuery>;
 
 		public:

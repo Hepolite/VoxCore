@@ -1,6 +1,8 @@
 
 #include "vox/world/data/BlockRegion.h"
 
+#include "vox/world/data/Indexing.h"
+
 vox::data::BlockRegion::BlockRegion(const glm::ivec3& offset, const glm::ivec3& size)
 	: BlockRegion(offset, size, BlockData{})
 {}
@@ -10,19 +12,14 @@ vox::data::BlockRegion::BlockRegion(const glm::ivec3& offset, const glm::ivec3& 
 	m_data.resize(m_size.x * m_size.y * m_size.z, data);
 }
 
-unsigned int vox::data::BlockRegion::getIndex(const glm::ivec3& pos) const
-{
-	return ((pos.x - m_offset.x) * m_size.y + (pos.y - m_offset.y)) * m_size.z + (pos.z - m_offset.z);
-}
-
 vox::data::BlockData vox::data::BlockRegion::getBlock(const glm::ivec3& pos) const
 {
-	const auto index = getIndex(pos);
+	const auto index = getIndex(pos, m_offset, m_size);
 	return index < m_data.size() ? m_data[index] : BlockData{};
 }
 void vox::data::BlockRegion::setBlock(const BlockData& block, const glm::ivec3& pos)
 {
-	const auto index = getIndex(pos);
+	const auto index = getIndex(pos, m_offset, m_size);
 	if (index < m_data.size())
 		m_data[index] = block;
 }

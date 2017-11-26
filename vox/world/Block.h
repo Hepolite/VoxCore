@@ -12,28 +12,30 @@ namespace vox
 		class Block
 		{
 		public:
-			Block() = delete;
+			Block() = default;
 			Block(const std::string& name, unsigned int id) : m_name(name), m_id(id) {}
 			~Block() = default;
 
 			inline std::string getName() const { return m_name; }
 			inline unsigned int getId() const { return m_id; }
 
-			inline void setColorEmittance(const glm::ivec4& emittance) { m_colorEmittance = emittance; }
-			inline void setColorAbsorption(const glm::ivec4& absorption) { m_colorAbsorption = absorption; }
-			inline void setColorFilter(const glm::ivec4& filter) { m_colorFilter = filter; }
+			inline void setLightEmittance(const glm::uvec4& emittance) { m_lightEmittance = emittance; }
+			inline void setLightAbsorption(const glm::uvec4& absorption) { m_lightAbsorption = absorption; }
+			inline void setLightFilter(const glm::uvec4& filter) { m_lightFilter = filter; }
 
-			inline glm::ivec4 getColorEmittance() const { return m_colorEmittance; }
-			inline glm::ivec4 getColorAbsorption() const { return m_colorAbsorption; }
-			inline glm::ivec4 getColorFilter() const { return m_colorFilter; }
+			inline glm::uvec4 getLightEmittance() const { return m_lightEmittance; }
+			inline glm::uvec4 getLightAbsorption() const { return m_lightAbsorption; }
+			inline glm::uvec4 getLightFilter() const { return m_lightFilter; }
+
+			inline bool doesEmitLight() const { return m_lightEmittance.x + m_lightEmittance.y + m_lightEmittance.z + m_lightEmittance.w != 0; }
 
 		private:
-			std::string m_name;
-			unsigned int m_id;
+			std::string m_name = "";
+			unsigned int m_id = 0;
 
-			glm::ivec4 m_colorEmittance;
-			glm::ivec4 m_colorAbsorption;
-			glm::ivec4 m_colorFilter;
+			glm::uvec4 m_lightEmittance;
+			glm::uvec4 m_lightAbsorption;
+			glm::uvec4 m_lightFilter;
 		};
 	}
 }

@@ -17,28 +17,28 @@ void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 
 vox::data::BlockData vox::world::Chunk::getBlock(const glm::uvec3& pos) const
 {
-	return m_data->getBlock(pos);
+	if (!m_dataRLE.empty())
+		return m_dataRLE.getBlock(pos);
+	return m_dataFlat.getBlock(pos);
 }
 void vox::world::Chunk::acceptReadQuery(data::BlockQuery& query) const
 {
-	m_data->acceptReadQuery(query);
+	if (!m_dataRLE.empty())
+		m_dataRLE.acceptReadQuery(query);
+	else
+		m_dataFlat.acceptReadQuery(query);
 }
 void vox::world::Chunk::acceptWriteQuery(data::BlockQuery& query)
 {
 	data::ChunkDataTranslator translator;
-
-	if (m_data == nullptr)
-		m_data = &m_dataFlat;
-	else if (m_data == &m_dataRLE)
+	if (m_dataFlat.empty())
 	{
-		m_data = &m_dataFlat;
 		m_dataFlat = translator.toFlat(m_dataRLE);
 		m_dataRLE.forget();
 	}
 
-	m_data->acceptWriteQuery(query);
+	m_dataFlat.acceptWriteQuery(query);
 
-	m_data = &m_dataRLE;
 	m_dataRLE = translator.toRLE(m_dataFlat);
 	m_dataFlat.forget();
 }
@@ -50,25 +50,32 @@ vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 
 	data::BlockRegion region{ glm::ivec3{ -1 }, glm::ivec3{ chunk::SIZE + 2 } };
 
-	m_data->acceptRegionQuery(region, glm::uvec3{}, glm::ivec3{}, glm::uvec3{ SIZE });
+	getMeshingData(region, glm::uvec3{}, glm::ivec3{}, glm::uvec3{ SIZE });
 	if (const auto neightbor = getNeighbor(Side::NORTH))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
+		neightbor->getMeshingData(region, glm::ivec3{}, glm::ivec3{ SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::SOUTH))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ SIZE_MINUS_ONE, 0, 0 }, glm::ivec3{ -chunk::SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
+		neightbor->getMeshingData(region, glm::ivec3{ SIZE_MINUS_ONE, 0, 0 }, glm::ivec3{ -chunk::SIZE, 0, 0 }, glm::uvec3{ 1, SIZE, SIZE });
 	if (const auto neightbor = getNeighbor(Side::WEST))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ 0, SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
+		neightbor->getMeshingData(region, glm::ivec3{}, glm::ivec3{ 0, SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::EAST))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ 0, SIZE_MINUS_ONE, 0 }, glm::ivec3{ 0, -chunk::SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
+		neightbor->getMeshingData(region, glm::ivec3{ 0, SIZE_MINUS_ONE, 0 }, glm::ivec3{ 0, -chunk::SIZE, 0 }, glm::uvec3{ SIZE, 1, SIZE });
 	if (const auto neightbor = getNeighbor(Side::TOP))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{}, glm::ivec3{ 0, 0, SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
+		neightbor->getMeshingData(region, glm::ivec3{}, glm::ivec3{ 0, 0, SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 	if (const auto neightbor = getNeighbor(Side::BOTTOM))
-		neightbor->m_data->acceptRegionQuery(region, glm::ivec3{ 0, 0, SIZE_MINUS_ONE }, glm::ivec3{ 0, 0, -chunk::SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
+		neightbor->getMeshingData(region, glm::ivec3{ 0, 0, SIZE_MINUS_ONE }, glm::ivec3{ 0, 0, -chunk::SIZE }, glm::uvec3{ SIZE, SIZE, 1 });
 
 	return region;
 }
+void vox::world::Chunk::getMeshingData(data::BlockRegion& region, const glm::uvec3& position, const glm::uvec3& offset, const glm::uvec3& size) const
+{
+	if (!m_dataRLE.empty())
+		m_dataRLE.acceptRegionQuery(region, position, offset, size);
+	else
+		m_dataFlat.acceptRegionQuery(region, position, offset, size);
+}
 vox::data::ChunkDataRLE vox::world::Chunk::getStoringData() const
 {
-	if (m_data != &m_dataFlat)
+	if (!m_dataRLE.empty())
 		return m_dataRLE;
 	data::ChunkDataTranslator translator;
 	return translator.toRLE(m_dataFlat);
@@ -77,7 +84,6 @@ void vox::world::Chunk::injectChunkData(data::ChunkDataRLE&& data)
 {
 	m_dataFlat.forget();
 	m_dataRLE = std::move(data);
-	m_data = &m_dataRLE;
 }
 
 unsigned int vox::world::Chunk::memusage() const
@@ -88,4 +94,5 @@ bool vox::world::Chunk::empty() const
 {
 	return m_dataFlat.empty() && m_dataRLE.empty();
 }
+
 
