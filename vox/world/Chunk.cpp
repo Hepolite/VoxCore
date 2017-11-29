@@ -14,6 +14,21 @@ void vox::world::Chunk::setNeighbor(Chunk* neighbor, const Side& side)
 	if (neighbor != nullptr)
 		neighbor->m_neighbors[side.opposite.id] = this;
 }
+void vox::world::Chunk::setNearest(Chunk* above, Chunk* below)
+{
+	if (above == nullptr && m_nearestAbove != nullptr)
+		m_nearestAbove->m_nearestBelow = m_nearestBelow;
+	if (below == nullptr && m_nearestBelow != nullptr)
+		m_nearestBelow->m_nearestAbove = m_nearestAbove;
+
+	m_nearestAbove = above;
+	m_nearestBelow = below;
+
+	if (above != nullptr)
+		above->m_nearestBelow = this;
+	if (below != nullptr)
+		below->m_nearestAbove = this;
+}
 
 vox::data::BlockData vox::world::Chunk::getBlock(const glm::uvec3& pos) const
 {
@@ -30,19 +45,16 @@ void vox::world::Chunk::acceptReadQuery(data::BlockQuery& query) const
 }
 void vox::world::Chunk::acceptWriteQuery(data::BlockQuery& query)
 {
-	data::ChunkDataTranslator translator;
-	if (m_dataFlat.empty())
-	{
-		m_dataFlat = translator.toFlat(m_dataRLE);
-		m_dataRLE.forget();
-	}
-
+	expand();
 	m_dataFlat.acceptWriteQuery(query);
-
-	m_dataRLE = translator.toRLE(m_dataFlat);
-	m_dataFlat.forget();
+	//contract();
 }
 
+vox::data::ChunkDataFlat & vox::world::Chunk::getActualData()
+{
+	expand();
+	return m_dataFlat;
+}
 vox::data::BlockRegion vox::world::Chunk::getMeshingData() const
 {
 	const unsigned int SIZE = static_cast<unsigned int>(chunk::SIZE);
@@ -86,13 +98,18 @@ void vox::world::Chunk::injectChunkData(data::ChunkDataRLE&& data)
 	m_dataRLE = std::move(data);
 }
 
-unsigned int vox::world::Chunk::memusage() const
+void vox::world::Chunk::expand()
 {
-	return m_dataFlat.memusage() + m_dataRLE.memusage();
+	if (!m_dataFlat.empty())
+		return;
+	m_dataFlat = data::ChunkDataTranslator{}.toFlat(m_dataRLE);
+	m_dataFlat.expand();
+	m_dataRLE.forget();
 }
-bool vox::world::Chunk::empty() const
+void vox::world::Chunk::contract()
 {
-	return m_dataFlat.empty() && m_dataRLE.empty();
+	if (!m_dataRLE.empty())
+		return;
+	m_dataRLE = data::ChunkDataTranslator{}.toRLE(m_dataFlat);
+	m_dataFlat.forget();
 }
-
-

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
 #include <vector>
@@ -37,9 +38,9 @@ namespace vox
 			inline unsigned int getId() const { return m_data >> 20u; }
 			inline glm::uvec4 getLight() const { return glm::uvec4{ m_data >> 15u, m_data >> 10u, m_data >> 5u, m_data } & 0x1Fu; }
 
-			inline void setData(unsigned int data) { m_data = data; }
-			inline void setId(unsigned int id) { m_data = (m_data & BITMASK_LIGHT) | (id << 20u); };
-			inline void setLight(const glm::uvec4& light) { const auto l = light & 0x1Fu; m_data = (m_data & BITMASK_ID) | (l.x << 15u) | (l.y << 10u) | (l.z << 5u) | l.w; }
+			inline BlockData& setData(unsigned int data) { m_data = data; return *this; }
+			inline BlockData& setId(unsigned int id) { m_data = (m_data & BITMASK_LIGHT) | (id << 20u); return *this; };
+			inline BlockData& setLight(const glm::uvec4& light) { const auto l = light & 0x1Fu; m_data = (m_data & BITMASK_ID) | (l.x << 15u) | (l.y << 10u) | (l.z << 5u) | l.w; return *this; }
 
 		private:
 			unsigned int m_data = 0;

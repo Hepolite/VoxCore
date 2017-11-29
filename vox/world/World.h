@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include "vox/world/Chunk.h"
+#include "vox/world/ChunkColumn.h"
 #include "vox/world/data/ChunkQuery.h"
 
 #include <glm/gtx/hash.hpp>
+#include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
 #include <string>
@@ -16,17 +17,21 @@ namespace vox
 	{
 		class World
 		{
-			using ChunkMap = std::unordered_map<glm::ivec3, Chunk>;
-
 		public:
 			World() = delete;
 			World(const std::string& name) : m_name(name) {}
+			World(const World&) = delete;
+			World(World&&) = delete;
+			~World() = default;
+
+			World& operator=(const World&) = delete;
+			World& operator=(World&&) = delete;
+
 
 			inline std::string getName() const { return m_name; }
-
-			data::BlockData getBlock(const glm::ivec3& pos) const;
 			std::vector<glm::ivec3> getChunkCoordinates() const;
 
+			data::BlockData getBlock(const glm::ivec3& pos) const;
 			void acceptReadQuery(data::ChunkQuery& query) const;
 			void acceptWriteQuery(data::ChunkQuery& query);
 
@@ -34,17 +39,18 @@ namespace vox
 			bool exportChunkStorageData(const glm::ivec3& pos, data::ChunkDataRLE& data) const;
 			bool exportChunkRenderData(const glm::ivec3& pos, data::BlockRegion& data) const;
 
-			void debugMemusage() const;
-
 		private:
+			ChunkColumn& getOrCreateColumn(int cx, int cy);
+			const ChunkColumn* getColumn(int cx, int cy) const;
+			void deleteColumn(int cx, int cy);
+			
 			Chunk& getOrCreateChunk(const glm::ivec3& cpos);
+			Chunk* getChunk(const glm::ivec3& cpos) const;
 			void deleteChunk(const glm::ivec3& cpos);
-			Chunk* getChunk(const glm::ivec3& cpos);
-			const Chunk* getChunk(const glm::ivec3& cpos) const;
-
+			
 			const std::string m_name;
 
-			ChunkMap m_chunks;
+			std::unordered_map<glm::ivec2, ChunkColumn> m_columns;
 		};
 	}
 }

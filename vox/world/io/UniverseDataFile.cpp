@@ -19,7 +19,7 @@ vox::world::io::UniverseDataFile::UniverseDataFile()
 	{
 		close(event.getWorld());
 	});
-	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkBlockChange>([this](events::ChunkBlockChange& event)
+	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkChange>([this](events::ChunkChange& event)
 	{
 		const auto& saver = m_savers.find(event.getWorld());
 		if (saver != m_savers.end())

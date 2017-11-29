@@ -48,7 +48,7 @@ vox::world::render::UniverseRenderer::UniverseRenderer()
 		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, -1 });
 		renderer.scheduleMeshTask(world, cpos + glm::ivec3 { 0, 0, 1 });
 	});
-	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkBlockChange>([this](events::ChunkBlockChange& event)
+	m_chunkBlockChangeListener = eventBus.registerCallback<events::ChunkChange>([this](events::ChunkChange& event)
 	{
 		const auto world = event.getWorld();
 		const auto cpos = event.getChunkPos();

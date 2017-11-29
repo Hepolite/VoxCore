@@ -28,14 +28,16 @@ namespace vox
 			inline glm::uvec4 getLightFilter() const { return m_lightFilter; }
 
 			inline bool doesEmitLight() const { return m_lightEmittance.x + m_lightEmittance.y + m_lightEmittance.z + m_lightEmittance.w != 0; }
+			inline bool doesAbsorbLight() const { return m_lightAbsorption.x + m_lightAbsorption.y + m_lightAbsorption.z + m_lightAbsorption.w != 0; }
+			inline bool doesFilterLight() const { return m_lightFilter.x + m_lightFilter.y + m_lightFilter.z + m_lightFilter.w != 4 * 31; }
 
 		private:
 			std::string m_name = "";
 			unsigned int m_id = 0;
 
-			glm::uvec4 m_lightEmittance;
-			glm::uvec4 m_lightAbsorption;
-			glm::uvec4 m_lightFilter;
+			glm::uvec4 m_lightEmittance{ 0 };
+			glm::uvec4 m_lightAbsorption{ 31 };
+			glm::uvec4 m_lightFilter{ 31 };
 		};
 	}
 }

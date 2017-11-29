@@ -34,8 +34,9 @@ namespace vox
 			std::vector<World*> getWorlds() const;
 
 		private:
-			void loadBlocks();
 			void loadRegistry();
+			void loadBlocks();
+			void loadBlock(Block& block);
 
 			BlockRegistry m_registry;
 

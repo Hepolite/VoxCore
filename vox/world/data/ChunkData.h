@@ -21,6 +21,8 @@ namespace vox
 			void acceptWriteQuery(BlockQuery& query);
 			void setBlock(const glm::uvec3& pos, const BlockData& data);
 			void setBlock(unsigned int index, const BlockData& data);
+			void updateBlock(const glm::uvec3& pos, const BlockData& data);
+			void updateBlock(unsigned int index, const BlockData& data);
 			BlockData getBlock(const glm::uvec3& pos) const;
 			BlockData getBlock(unsigned int index) const;
 
@@ -29,6 +31,11 @@ namespace vox
 			bool empty() const;
 			void expand();
 			void forget();
+
+			void pushPropagationNode(const glm::ivec3& pos, const glm::uvec4& light);
+			bool pollPropagationNode(Query& node);
+			void pushRemovalNode(const glm::ivec3& pos, const glm::uvec4& light);
+			bool pollRemovalNode(Query& node);
 
 		private:
 			BlockDataList m_data;

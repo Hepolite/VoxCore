@@ -4,44 +4,80 @@
 #include "vox/events/Chunk.h"
 #include "vox/world/Side.h"
 #include "vox/world/ChunkSize.h"
+#include "vox/world/util/LightPropagator.h"
 
 #include "hen/core/Core.h"
 #include "hen/event/EventBus.h"
 
-#include <Log.h>
 
-const vox::world::Chunk* vox::world::World::getChunk(const glm::ivec3& cpos) const
+std::vector<glm::ivec3> vox::world::World::getChunkCoordinates() const
 {
-	const auto& loc = m_chunks.find(cpos);
-	return loc == m_chunks.end() ? nullptr : &loc->second;
+	std::vector<glm::ivec3> coords;
+	for (auto& node : m_columns)
+	for (auto& coord : node.second)
+		coords.emplace_back(node.first, coord.first);
+	return coords;
 }
-vox::world::Chunk* vox::world::World::getChunk(const glm::ivec3& cpos)
+
+
+vox::world::ChunkColumn& vox::world::World::getOrCreateColumn(int cx, int cy)
 {
-	const auto& loc = m_chunks.find(cpos);
-	return loc == m_chunks.end() ? nullptr : &loc->second;
+	return m_columns[glm::ivec2{ cx, cy }];
 }
+const vox::world::ChunkColumn* vox::world::World::getColumn(int cx, int cy) const
+{
+	const auto it = m_columns.find(glm::ivec2{ cx, cy });
+	return it == m_columns.end() ? nullptr : &it->second;
+}
+void vox::world::World::deleteColumn(int cx, int cy)
+{
+	m_columns.erase(glm::ivec2{ cx, cy });
+}
+
 vox::world::Chunk& vox::world::World::getOrCreateChunk(const glm::ivec3& cpos)
 {
-	const auto& data = m_chunks.emplace(std::piecewise_construct, std::make_tuple(cpos), std::make_tuple());
-	auto& chunk = data.first->second;
-	if (data.second)
-	{
-		hen::Core::getEventBus().post(events::ChunkCreate{ this, cpos });
-		for (const auto& side : Side::SIDES)
-			chunk.setNeighbor(getChunk(cpos + side.z), side);
-	}
+	auto& column = getOrCreateColumn(cpos.x, cpos.y);
+	if (auto chunk = column.getChunkAt(cpos.z))
+		return *chunk;
+
+	auto& chunk = column.createChunk(cpos);
+	for (const auto& side : Side::SIDES)
+		chunk.setNeighbor(getChunk(cpos + side.z), side);
+	chunk.setNearest(column.getChunkAbove(cpos.z), column.getChunkBelow(cpos.z));
+
+	hen::Core::getEventBus().post(events::ChunkCreate{ this, cpos });
+
+	util::LightPropagator propagator{ &chunk };
+	propagator.initialize();
+	propagator.work();
+	for (auto impacted : propagator.getInpactedChunks())
+		hen::Core::getEventBus().post(events::ChunkChange{ this, impacted, impacted->getPos(), propagator.min(), propagator.max() });
+
 	return chunk;
+}
+vox::world::Chunk* vox::world::World::getChunk(const glm::ivec3& cpos) const
+{
+	if (auto column = getColumn(cpos.x, cpos.y))
+		return column->getChunkAt(cpos.z);
+	return nullptr;
 }
 void vox::world::World::deleteChunk(const glm::ivec3& cpos)
 {
 	auto chunk = getChunk(cpos);
 	if (chunk == nullptr)
 		return;
+	hen::Core::getEventBus().post(events::ChunkDestroy{ this, cpos });
+
 	for (const auto& side : Side::SIDES)
 		chunk->setNeighbor(nullptr, side);
-	hen::Core::getEventBus().post(events::ChunkDestroy{ this, cpos });
-	m_chunks.erase(cpos);
+	chunk->setNearest(nullptr, nullptr);
+
+	auto& column = getOrCreateColumn(cpos.x, cpos.y);
+	column.deleteChunk(cpos.z);
+	if (column.empty())
+		deleteColumn(cpos.x, cpos.y);
 }
+
 
 vox::data::BlockData vox::world::World::getBlock(const glm::ivec3& pos) const
 {
@@ -49,14 +85,6 @@ vox::data::BlockData vox::world::World::getBlock(const glm::ivec3& pos) const
 		return chunk->getBlock(pos & chunk::SIZE_MINUS_ONE);
 	return data::BlockData{};
 }
-std::vector<glm::ivec3> vox::world::World::getChunkCoordinates() const
-{
-	std::vector<glm::ivec3> chunks;
-	for (const auto& pair : m_chunks)
-		chunks.push_back(pair.first);
-	return chunks;
-}
-
 void vox::world::World::acceptReadQuery(data::ChunkQuery& query) const
 {
 	for (auto& chunkQuery : query)
@@ -69,17 +97,27 @@ void vox::world::World::acceptWriteQuery(data::ChunkQuery& query)
 {
 	for (auto& chunkQuery : query)
 		getOrCreateChunk(chunkQuery.first).acceptWriteQuery(chunkQuery.second);
+	for (auto& chunkQuery : query)
+	{
+		if (auto chunk = getChunk(chunkQuery.first))
+		{
+			util::LightPropagator propagator{ chunk };
+			propagator.work();
+			for (auto chunk : propagator.getInpactedChunks())
+				hen::Core::getEventBus().post(events::ChunkChange{ this, chunk, chunk->getPos(), propagator.min(), propagator.max() });
+		}
+	}
 
 	for (auto& chunkQuery : query)
 	{
-		const auto cpos = chunkQuery.first;
+		auto& cpos = chunkQuery.first;
 		auto& blockQuery = chunkQuery.second;
 		if (const auto chunk = getChunk(cpos))
 		{
 			if (chunk->empty())
 				deleteChunk(cpos);
 			else
-				hen::Core::getEventBus().post(events::ChunkBlockChange{ chunk, this, cpos, blockQuery.min(), blockQuery.max() });
+				hen::Core::getEventBus().post(events::ChunkChange{ this, chunk, cpos, blockQuery.min(), blockQuery.max() });
 		}
 	}
 }
@@ -104,39 +142,3 @@ bool vox::world::World::exportChunkRenderData(const glm::ivec3& pos, data::Block
 	data = chunk->getMeshingData();
 	return true;
 }
-
-void vox::world::World::debugMemusage() const
-{
-	LOG_DEBUG << "====================================";
-	LOG_DEBUG << "Memory dump for world " << m_name << ":";
-	LOG_DEBUG << "====================================";
-	std::unordered_map<glm::ivec3, unsigned int> regions;
-	unsigned long long int size = 0;
-	unsigned int biggestChunk = 0;
-	for (const auto& pair : m_chunks)
-	{
-		const auto& pos = pair.first;
-		const auto& chunk = pair.second;
-		size += chunk.memusage();
-		biggestChunk = std::max(biggestChunk, chunk.memusage());
-		if (regions.find(pos >> 4) == regions.end())
-			regions[pos >> 4] = 0;
-		regions[pos >> 4] += chunk.memusage();
-		LOG_DEBUG << "Chunk [" << pos.x << ", " << pos.y << ", " << pos.z << "] " << chunk.memusage() << "b (" << (float)chunk.memusage() / 1024.0f << "kb)";
-	}
-	LOG_DEBUG << "====================================";
-	unsigned int biggestRegion = 0;
-	for (const auto& region : regions)
-	{
-		LOG_DEBUG << "Region [" << region.first.x << ", " << region.first.y << ", " << region.first.z << "] " << region.second << "b (" << (float)region.second / 1024.0f / 1024.0f << "mb)";
-		biggestRegion = std::max(biggestRegion, region.second);
-	}
-	LOG_DEBUG << "====================================";
-	LOG_DEBUG << "Total world memory usage: " << size << "b (" << (float)size / 1024.0f / 1024.0f << "mb)";
-	LOG_DEBUG << "Avg. chunk mem usage: " << (float)size / (float)m_chunks.size() << "b (" << (float)size / (float)m_chunks.size() / 1024.0f << "kb), " << m_chunks.size() << " chunks";
-	LOG_DEBUG << "Avg. region mem usage: " << (float)size / (float)regions.size() << "b (" << (float)size / (float)regions.size() / 1024.0f / 1024.0f << "mb), " << regions.size() << " regions";
-	LOG_DEBUG << "Biggest chunk mem usage: " << biggestChunk << "b (" << (float)biggestChunk / 1024.0f << "kb)";
-	LOG_DEBUG << "Biggest region mem usage: " << biggestRegion << "b (" << (float)biggestRegion / 1024.0f / 1024.0f << "mb)";
-	LOG_DEBUG << "====================================";
-}
-

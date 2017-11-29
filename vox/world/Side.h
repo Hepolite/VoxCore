@@ -25,12 +25,13 @@ namespace vox
 
 			const unsigned int id;
 			const Side& opposite;
+			const glm::ivec3 axis;	// x = right, y = up, z = normal, perspective along normal towards surface
 			const glm::ivec3 x;	// Side tangent
 			const glm::ivec3 y;	// Side tangent, orthogonal to x
 			const glm::ivec3 z;	// Side normal, orthogonal to both x and y
 
 		private:
-			Side(unsigned int id, const Side& opposite, const glm::ivec3& x, const glm::ivec3& y, const glm::ivec3& z);
+			Side(unsigned int id, const Side& opposite, const glm::ivec3& axis, const glm::ivec3& x, const glm::ivec3& y, const glm::ivec3& z);
 		};
 	}
 }

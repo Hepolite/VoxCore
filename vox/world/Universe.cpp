@@ -61,11 +61,13 @@ std::vector<vox::world::World*> vox::world::Universe::getWorlds() const
 
 void vox::world::Universe::onLoad()
 {
-	loadBlocks();
 	loadRegistry();
+	loadBlocks();
 }
-void vox::world::Universe::loadBlocks()
+
+void vox::world::Universe::loadRegistry()
 {
+	// Load blocks from the persistent block data file
 	hen::io::XMLFile dataFile{ "data/universe/data.xml" };
 	const auto& doc = dataFile.open();
 	if (const auto& blocks = doc.child("blocks"))
@@ -77,9 +79,8 @@ void vox::world::Universe::loadBlocks()
 			m_registry.insert(name, id);
 		}
 	}
-}
-void vox::world::Universe::loadRegistry()
-{
+
+	// Load up new blocks from the block folder
 	hen::io::Folder blockFolder{ "data/universe/blocks" };
 	for (const auto& file : blockFolder.getFiles())
 	{
@@ -87,3 +88,27 @@ void vox::world::Universe::loadRegistry()
 			m_registry.add(file.getName());
 	}
 }
+void vox::world::Universe::loadBlocks()
+{
+	for (auto& block : m_registry.getBlocks())
+		loadBlock(block);
+}
+void vox::world::Universe::loadBlock(Block& block)
+{
+	hen::io::XMLFile file{ "data/universe/blocks/" + block.getName() + ".xml" };
+	const auto& doc = file.open();
+
+	if (const auto data = doc.child("data"))
+	{
+		if (const auto light = data.child("light"))
+		{
+			if (const auto emit = light.attribute("emit"))
+				block.setLightEmittance(hen::string::as_uvec4(emit.as_string()));
+			if (const auto absorb = light.attribute("absorb"))
+				block.setLightAbsorption(hen::string::as_uvec4(absorb.as_string()));
+			if (const auto filter = light.attribute("filter"))
+				block.setLightFilter(hen::string::as_uvec4(filter.as_string()));
+		}
+	}
+}
+

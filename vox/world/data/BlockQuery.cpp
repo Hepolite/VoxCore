@@ -14,6 +14,7 @@ void vox::data::BlockQuery::add(const BlockData& data, const glm::uvec3& start, 
 {
 	const auto min = hen::math::min(start, end);
 	const auto max = hen::math::max(start, end);
+	limit(min, max);
 
 	glm::uvec3 pos;
 	for (pos.x = min.x; pos.x <= max.x; ++pos.x)

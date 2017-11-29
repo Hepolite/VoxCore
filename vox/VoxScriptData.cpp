@@ -62,8 +62,6 @@ namespace
 		helper.addFunction(&World::getBlock, "getBlock");
 		helper.addFunction(&World::acceptReadQuery, "acceptReadQuery");
 		helper.addFunction(&World::acceptWriteQuery, "acceptWriteQuery");
-
-		helper.addFunction(&World::debugMemusage, "debugWorldMemory");
 	}
 	void addUniverse(hen::script::ScriptHelper& helper)
 	{

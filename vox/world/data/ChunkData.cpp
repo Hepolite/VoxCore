@@ -8,7 +8,6 @@
 
 #include "hen/util/MathLib.h"
 
-
 void vox::data::ChunkDataFlat::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
 	const auto min = hen::math::max(glm::uvec3{}, dataOffset);
@@ -37,15 +36,28 @@ void vox::data::ChunkDataFlat::setBlock(const glm::uvec3& pos, const BlockData& 
 }
 void vox::data::ChunkDataFlat::setBlock(unsigned int index, const BlockData& data)
 {
+	static auto& registry = VoxCore::getUniverse().getRegistry();
+
 	if (index < size())
 	{
-		if ((data.getData() & BlockData::BITMASK_LIGHT) != 0)
-			m_lightPropagationNodes.emplace(data, index);
-		else
-			m_lightRemovalNodes.emplace(m_data[index], index);
-
+		m_lightRemovalNodes.emplace(m_data[index], index);
 		m_data[index] = data;
+
+		if (auto& block = registry.getBlock(data.getId()); block.doesEmitLight())
+		{
+			m_data[index].setLight(block.getLightEmittance());
+			m_lightPropagationNodes.emplace(m_data[index], index);
+		}
 	}
+}
+void vox::data::ChunkDataFlat::updateBlock(const glm::uvec3& pos, const BlockData& data)
+{
+	updateBlock(getIndex(pos), data);
+}
+void vox::data::ChunkDataFlat::updateBlock(unsigned int index, const BlockData& data)
+{
+	if (index < size())
+		m_data[index] = data;
 }
 vox::data::BlockData vox::data::ChunkDataFlat::getBlock(const glm::uvec3& pos) const
 {
@@ -77,14 +89,41 @@ void vox::data::ChunkDataFlat::expand()
 void vox::data::ChunkDataFlat::forget()
 {
 	m_data.swap(BlockDataList{});
+	m_lightPropagationNodes.swap(std::queue<Query>{});
+	m_lightRemovalNodes.swap(std::queue<Query>{});
+}
+
+void vox::data::ChunkDataFlat::pushPropagationNode(const glm::ivec3& pos, const glm::uvec4& light)
+{
+	m_lightPropagationNodes.emplace(BlockData{ 0, light }, getIndex(pos));
+}
+bool vox::data::ChunkDataFlat::pollPropagationNode(Query& node)
+{
+	if (m_lightPropagationNodes.empty())
+		return false;
+	node = m_lightPropagationNodes.front();
+	m_lightPropagationNodes.pop();
+	return true;
+}
+void vox::data::ChunkDataFlat::pushRemovalNode(const glm::ivec3& pos, const glm::uvec4& light)
+{
+	m_lightRemovalNodes.emplace(BlockData{ 0, light }, getIndex(pos));
+}
+bool vox::data::ChunkDataFlat::pollRemovalNode(Query& node)
+{
+	if (m_lightRemovalNodes.empty())
+		return false;
+	node = m_lightRemovalNodes.front();
+	m_lightRemovalNodes.pop();
+	return true;
 }
 
 
 
 void vox::data::ChunkDataRLE::acceptRegionQuery(BlockRegion& region, const glm::uvec3& dataOffset, const glm::ivec3& regionOffset, const glm::uvec3& size) const
 {
-	const glm::uvec3 ZERO{};
-	const glm::uvec3 SIZE{ static_cast<unsigned int>(chunk::SIZE) };
+	static const glm::uvec3 ZERO{};
+	static const glm::uvec3 SIZE{ static_cast<unsigned int>(chunk::SIZE) };
 
 	if (dataOffset == ZERO && size == SIZE)
 	{

@@ -22,6 +22,8 @@ namespace vox
 
 			const Block& getBlock(const std::string& name) const;
 			const Block& getBlock(unsigned int id) const;
+			inline auto& getBlocks() { return m_blocks; }
+			inline auto& getBlocks() const { return m_blocks; }
 
 			inline unsigned int getId(const std::string& name) const { return getBlock(name).getId(); }
 			inline std::string getName(unsigned int id) const { return getBlock(id).getName(); }
