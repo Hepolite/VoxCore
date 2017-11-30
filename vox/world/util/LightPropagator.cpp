@@ -77,6 +77,8 @@ void vox::util::LightPropagator::propagateThisChunk()
 	data::Query node;
 	while (data.pollPropagationNode(node))
 	{
+		if ((node.first & data::BlockData::BITMASK_LIGHT) == 0)
+			continue;
 		const auto pos = data::getPosition(node.second);
 		const auto light = node.first.getLight();
 
@@ -123,7 +125,7 @@ void vox::util::LightPropagator::propagateAlong(glm::uvec4 light, const glm::ive
 	else
 		propagateTo(data, light, pos - up.z);
 }
-bool vox::util::LightPropagator::propagateTo(world::Chunk* chunk, glm::uvec4 light, const glm::ivec3& target)
+bool vox::util::LightPropagator::propagateTo(world::Chunk* chunk, const glm::uvec4& light, const glm::ivec3& target)
 {
 	if (!propagateTo(chunk->getActualData(), light, target))
 		return false;
@@ -140,13 +142,15 @@ bool vox::util::LightPropagator::propagateTo(data::ChunkDataFlat& data, glm::uve
 	auto& targetBlock = registry.getBlock(targetData.getId());
 
 	const auto reduction = targetBlock.getLightAbsorption() + 1u;
+	const auto filter = targetBlock.getLightFilter();
 	for (unsigned int i = 0; i < 4; ++i)
+	{
 		light[i] = light[i] <= reduction[i] ? 0 : light[i] - reduction[i];
-	light = hen::math::min(light, targetBlock.getLightFilter());
-	for (unsigned int i = 0; i < 4; ++i)
+		light[i] = hen::math::min(light[i], filter[i]);
 		light[i] = light[i] <= targetLight[i] ? 0 : light[i];
+	}
 
-	if (light.r + light.g + light.b + light.a != 0)
+	if ((light.r | light.g | light.b | light.a) != 0)
 	{
 		data.updateBlock(target, targetData.setLight(hen::math::max(targetLight, light)));
 		data.pushPropagationNode(target, light);
@@ -167,6 +171,8 @@ void vox::util::LightPropagator::removalThisChunk()
 	data::Query node;
 	while (data.pollRemovalNode(node))
 	{
+		if ((node.first & data::BlockData::BITMASK_LIGHT) == 0)
+			continue;
 		const auto pos = data::getPosition(node.second);
 		const auto light = node.first.getLight();
 
@@ -180,7 +186,7 @@ void vox::util::LightPropagator::removalThisChunk()
 void vox::util::LightPropagator::removalOtherChunks()
 {
 	for (auto chunk : m_chunksToRemoval)
-		LightPropagator{ chunk }.removal();
+		LightPropagator{ chunk }.work();
 }
 void vox::util::LightPropagator::removalAlong(glm::uvec4 light, const glm::ivec3& pos, const world::Side& up)
 {
@@ -213,7 +219,7 @@ void vox::util::LightPropagator::removalAlong(glm::uvec4 light, const glm::ivec3
 	else
 		removalTo(data, light, pos - up.z);
 }
-bool vox::util::LightPropagator::removalTo(world::Chunk* chunk, glm::uvec4 light, const glm::ivec3& target)
+bool vox::util::LightPropagator::removalTo(world::Chunk* chunk, const glm::uvec4& light, const glm::ivec3& target)
 {
 	if (!removalTo(chunk->getActualData(), light, target))
 		return false;
@@ -221,41 +227,32 @@ bool vox::util::LightPropagator::removalTo(world::Chunk* chunk, glm::uvec4 light
 	m_impactedChunks.emplace(chunk);
 	return true;
 }
-bool vox::util::LightPropagator::removalTo(data::ChunkDataFlat& data, glm::uvec4 light, const glm::ivec3& target)
+bool vox::util::LightPropagator::removalTo(data::ChunkDataFlat& data, const glm::uvec4& light, const glm::ivec3& target)
 {
-	static auto& registry = VoxCore::getUniverse().getRegistry();
-
 	auto targetData = data.getBlock(target);
-	auto targetLight = targetData.getLight();
-	auto& targetBlock = registry.getBlock(targetData.getId());
-	if (targetLight.r + targetLight.g + targetLight.b + targetLight.a == 0)
+	const auto targetLight = targetData.getLight();
+	if ((targetData & data::BlockData::BITMASK_LIGHT) == 0)
 		return false;
-
-	const auto reduction = targetBlock.getLightAbsorption() + 1u;
-	for (unsigned int i = 0; i < 4; ++i)
-		light[i] = light[i] <= reduction[i] ? 0 : light[i] - reduction[i];
-	light = hen::math::min(light, targetBlock.getLightFilter());
-
+	
+	glm::uvec4 propagate;
+	glm::uvec4 removal;
 	for (unsigned int i = 0; i < 4; ++i)
 	{
-		if (targetLight[i] <= light[i])
-			targetLight[i] = 0;
-		else
-			light[i] = 0;
+		if (targetLight[i] == 0)
+			continue;
+
+		if (targetLight[i] < light[i])
+			removal[i] = targetLight[i];
+		else if (targetLight[i] >= light[i])
+			propagate[i] = targetLight[i];
 	}
 
-	if (targetLight.r + targetLight.g + targetLight.b + targetLight.a != 0)
-		data.pushPropagationNode(target, targetLight);
-	if (light.r + light.g + light.b + light.a != 0)
-	/*if (
-		(targetLight.r != 0 && targetLight.r < light.r) ||
-		(targetLight.g != 0 && targetLight.g < light.g) ||
-		(targetLight.b != 0 && targetLight.b < light.b) ||
-		(targetLight.a != 0 && targetLight.a < light.a)
-		)*/
+	data.updateBlock(target, targetData.setLight(propagate));
+	if ((propagate.r | propagate.g | propagate.b | propagate.a) != 0)
+		data.pushPropagationNode(target, propagate);
+	if ((removal.r | removal.g | removal.b | removal.a) != 0)
 	{
-		data.updateBlock(target, targetData.setLight(targetLight));
-		data.pushRemovalNode(target, light);
+		data.pushRemovalNode(target, removal);
 		return true;
 	}
 	return false;

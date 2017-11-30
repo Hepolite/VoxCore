@@ -17,7 +17,7 @@ void vox::data::ChunkDataFlat::acceptRegionQuery(BlockRegion& region, const glm:
 	for (pos.x = min.x; pos.x < max.x; ++pos.x)
 	for (pos.y = min.y; pos.y < max.y; ++pos.y)
 	for (pos.z = min.z; pos.z < max.z; ++pos.z)
-		region.setBlock(getBlock(pos), glm::ivec3{ pos } +regionOffset);
+		region.setBlock(getBlock(pos), glm::ivec3{ pos } + regionOffset);
 }
 void vox::data::ChunkDataFlat::acceptReadQuery(BlockQuery& query) const
 {
@@ -41,7 +41,7 @@ void vox::data::ChunkDataFlat::setBlock(unsigned int index, const BlockData& dat
 	if (index < size())
 	{
 		m_lightRemovalNodes.emplace(m_data[index], index);
-		m_data[index] = data;
+		m_data[index] = data & BlockData::BITMASK_ID;
 
 		if (auto& block = registry.getBlock(data.getId()); block.doesEmitLight())
 		{
